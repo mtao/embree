@@ -505,8 +505,10 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake"
     IMMEDIATE @ONLY)
 
+if(NOT TARGET uninstall)
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/uninstall.cmake)
+endif()
 
 SET_PROPERTY(TARGET uninstall PROPERTY FOLDER CMakePredefinedTargets)
 
