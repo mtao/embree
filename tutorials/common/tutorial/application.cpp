@@ -1,24 +1,38 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "application.h"
+
+#if defined(_WIN32)
+#  include <stdio.h>
+#  include <conio.h>
+#  include <windows.h>
+#endif
 
 namespace embree
 {
   Application* Application::instance = nullptr;
+
+  void waitForKeyPressedUnderWindows()
+  {
+#if defined(_WIN32)
+    HANDLE hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(hStdOutput, &csbi)) {
+      printf("GetConsoleScreenBufferInfo failed: %d\n", GetLastError());
+      return;
+    }
+    
+    /* do not pause when running on a shell */
+    if (csbi.dwCursorPosition.X != 0 || csbi.dwCursorPosition.Y != 0)
+      return;
+    
+    /* only pause if running in separate console window. */
+    printf("\n\tPress any key to exit...\n");
+    int ch = getch();
+#endif
+  }
   
   Application::Application(int features)
     : rtcore("start_threads=1,set_affinity=1"), verbosity(0),

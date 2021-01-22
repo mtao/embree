@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -1681,7 +1668,7 @@ namespace embree
       RTCGeometry hgeom3 = rtcGetGeometry(scene,geom3);
       AssertNoError(device);
       
-      for (size_t i=0; i<16; i++) 
+      for (size_t i=0; i<17; i++)
       {
         bool enabled0 = i & 1, enabled1 = i & 2, enabled2 = i & 4, enabled3 = i & 8;
         if (enabled0) rtcEnableGeometry(hgeom0); else rtcDisableGeometry(hgeom0); AssertNoError(device);
@@ -1722,9 +1709,9 @@ namespace embree
     
     static void move_mesh(RTCGeometry mesh, size_t numVertices, Vec3fa& pos) 
     {
-      Vec3fa* vertices = (Vec3fa*) rtcGetGeometryBufferData(mesh,RTC_BUFFER_TYPE_VERTEX,0);
+      Vec3ff* vertices = (Vec3ff*) rtcGetGeometryBufferData(mesh,RTC_BUFFER_TYPE_VERTEX,0);
       for (size_t i=0; i<numVertices; i++)
-        vertices[i] += Vec3fa(pos);
+        vertices[i] += Vec3ff(pos,0.0f);
       rtcUpdateGeometryBuffer(mesh,RTC_BUFFER_TYPE_VERTEX,0);
       rtcCommitGeometry(mesh);
     }
@@ -1758,7 +1745,7 @@ namespace embree
       for (size_t i=0; i<16; i++) 
       {
         bool move0 = i & 1, move1 = i & 2, move2 = i & 4, move3 = i & 8;
-        Vec3fa ds(2,0.1f,2,0.0f);
+        Vec3fa ds(2,0.1f,2);
         if (move0) { move_mesh(hgeom0,numVertices,ds); pos0 += ds; }
         if (move1) { move_mesh(hgeom1,numVertices,ds); pos1 += ds; }
         if (move2) { move_mesh(hgeom2,numVertices,ds); pos2 += ds; }
@@ -6042,6 +6029,11 @@ namespace embree
 int main(int argc, char** argv)
 {
   embree::VerifyApplication app;
-  return app.main(argc,argv);
+  int code = app.main(argc,argv);
+
+  /* wait for user input under Windows when opened in separate window */
+  embree::waitForKeyPressedUnderWindows();
+
+  return code;
 }
 

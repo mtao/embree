@@ -1,22 +1,11 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "tutorial.h"
 #include "scene.h"
 #include "statistics.h"
+
+#if defined(USE_GLFW)
 
 /* include GL */
 #if defined(__MACOSX__)
@@ -28,6 +17,8 @@
 #  include <GL/gl.h>
 #endif
 
+#endif
+
 #include "tutorial_device.h"
 #include "../scenegraph/scenegraph.h"
 #include "../scenegraph/geometry_creation.h"
@@ -37,6 +28,22 @@
 
 namespace embree
 {
+  /* access to debug shader render frame functions */
+  typedef void (* renderFrameFunc)(int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  renderFrameFunc renderFrame;
+  
+  extern "C" void renderFrameStandard(int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameEyeLight(int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameOcclusion(int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameUV      (int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameNg      (int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameGeomID  (int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameGeomIDPrimID(int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameTexCoords(int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameCycles  (int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameAmbientOcclusion(int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  extern "C" void renderFrameDifferentials(int* pixels, const unsigned int width, const unsigned int height, const float time, const ISPCCamera& camera);
+  
   extern "C"
   {
     RTCDevice g_device = nullptr;
@@ -57,6 +64,10 @@ namespace embree
     RTCIntersectContextFlags g_iflags_incoherent = RTC_INTERSECT_CONTEXT_FLAG_INCOHERENT;
 
     RayStats* g_stats = nullptr;
+
+    unsigned int render_texcoords_mode = 0;
+
+    int differentialMode = 0;
   }
 
   extern "C" int g_instancing_mode;
@@ -110,7 +121,6 @@ namespace embree
 
       window_width(512),
       window_height(512),
-      window(nullptr),
 
       time0(getSeconds()),
       debug_int0(0),
@@ -532,6 +542,12 @@ namespace embree
         scene->add(SceneGraph::createHairyPlane(0,p0,dx,dy,len,r,N,SceneGraph::ROUND_CURVE,new OBJMaterial));
       }, "--curve-plane p.x p.y p.z dx.x dx.y dx.z dy.x dy.y dy.z length radius: adds a plane build of bezier curves originated at p0 and spanned by the vectors dx and dy. num curves are generated with speficied length and radius.");
 
+     registerOption("sphere", [this] (Ref<ParseStream> cin, const FileName& path) {
+         const Vec3fa p = cin->getVec3fa();
+        const float  r = cin->getFloat();
+        scene->add(SceneGraph::createSphere(p, r, new OBJMaterial));
+      }, "--sphere p.x p.y p.z r: adds a sphere at position p with radius r");
+     
     registerOption("triangle-sphere", [this] (Ref<ParseStream> cin, const FileName& path) {
         const Vec3fa p = cin->getVec3fa();
         const float  r = cin->getFloat();
@@ -718,6 +734,7 @@ namespace embree
     ISPCCamera ispccamera = camera.getISPCCamera(width,height);
     initRayStats();
     device_render(pixels,width,height,0.0f,ispccamera);
+    renderFrame((int*)pixels,width,height,0.0f,ispccamera);
     Ref<Image> image = new Image4uc(width, height, (Col4uc*)pixels);
     Ref<Image> reference = loadImage(fileName);
     const double error = compareImages(image,reference);
@@ -749,6 +766,9 @@ namespace embree
   void errorFunc(int error, const char* description) {
     throw std::runtime_error(std::string("Error: ")+description);
   }
+
+#if defined(USE_GLFW)
+  
   void keyboardFunc(GLFWwindow* window, int key, int scancode, int action, int mods) {
     TutorialApplication::instance->keyboardFunc(window,key,scancode,action,mods);
   }
@@ -797,6 +817,67 @@ namespace embree
     return window;
   }
 
+  /* called when a key is pressed */
+  void TutorialApplication::keypressed(int key)
+  {
+    if (key == GLFW_KEY_F1) {
+      renderFrame = renderFrameStandard;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F2) {
+      renderFrame = renderFrameEyeLight;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F3) {
+      renderFrame = renderFrameOcclusion;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F4) {
+      renderFrame = renderFrameUV;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F5) {
+      renderFrame = renderFrameNg;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F6) {
+      renderFrame = renderFrameGeomID;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F7) {
+      renderFrame = renderFrameGeomIDPrimID;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F8) {
+      if (renderFrame == renderFrameTexCoords) render_texcoords_mode++;
+      renderFrame = renderFrameTexCoords;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F9) {
+      if (renderFrame == renderFrameCycles) scale *= 2.0f;
+      renderFrame = renderFrameCycles;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F10) {
+      if (renderFrame == renderFrameCycles) scale *= 0.5f;
+      renderFrame = renderFrameCycles;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F11) {
+      renderFrame = renderFrameAmbientOcclusion;
+      g_changed = true;
+    }
+    else if (key == GLFW_KEY_F12) {
+      if (renderFrame == renderFrameDifferentials) {
+        differentialMode = (differentialMode+1)%17;
+      } else {
+        renderFrame = renderFrameDifferentials;
+        differentialMode = 0;
+      }
+      g_changed = true;
+    }
+  }
+
   void TutorialApplication::keyboardFunc(GLFWwindow* window_in, int key, int scancode, int action, int mods)
   {
     ImGui_ImplGlfw_KeyCallback(window_in,key,scancode,action,mods);
@@ -805,7 +886,7 @@ namespace embree
     if (action == GLFW_PRESS)
     {
       /* call tutorial keyboard handler */
-      device_key_pressed(key);
+      keypressed(key);
 
       if (mods & GLFW_MOD_CONTROL)
       {
@@ -1022,10 +1103,72 @@ namespace embree
     this->width = width; this->height = height;
   }
 
+   void TutorialApplication::renderInteractive()
+   {
+     window_width = width;
+     window_height = height;
+     glfwSetErrorCallback(errorFunc);
+     glfwInit();
+     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,2);
+     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,0);
+     
+     if (fullscreen) window = createFullScreenWindow();
+     else            window = createStandardWindow(width,height);
+     
+     glfwMakeContextCurrent(window);
+     glfwSwapInterval(1);
+     reshapeFunc(window,0,0);
+     
+     // Setup ImGui binding
+     ImGui::CreateContext();
+     ImGuiIO& io = ImGui::GetIO(); (void)io;
+     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+     ImGui_ImplGlfwGL2_Init(window, false);
+     
+     // Setup style
+     ImGui::StyleColorsDark();
+     //ImGui::StyleColorsClassic();
+     
+     // Load Fonts
+     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them. 
+     // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple. 
+     // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+     // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+     // - Read 'misc/fonts/README.txt' for more instructions and details.
+     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+     //io.Fonts->AddFontDefault();
+     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+     //IM_ASSERT(font != NULL);
+     
+     while (!glfwWindowShouldClose(window))
+     {
+       // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+       // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
+       // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+       // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+       glfwPollEvents();
+       
+       displayFunc();
+     }
+     
+     ImGui_ImplGlfwGL2_Shutdown();
+     ImGui::DestroyContext();
+     
+     glfwDestroyWindow(window);
+     glfwTerminate();
+   }
+  
+#endif
+  
   void TutorialApplication::render(unsigned* pixels, const unsigned width, const unsigned height, const float time, const ISPCCamera& camera) {
     device_render(pixels,width,height,time,camera);
+    renderFrame((int*)pixels,width,height,time,camera);
   }
-
+  
   void TutorialApplication::run(int argc, char** argv)
   {
     /* set debug values */
@@ -1035,23 +1178,24 @@ namespace embree
     rtcSetDeviceProperty(nullptr,(RTCDeviceProperty) 1000003, debug3);
 
     /* initialize ray tracing core */
+    renderFrame = renderFrameStandard;
     device_init(rtcore.c_str());
 
     /* set shader mode */
     switch (shader) {
-    case SHADER_DEFAULT  : break;
-    case SHADER_EYELIGHT : device_key_pressed(GLFW_KEY_F2); break;
-    case SHADER_OCCLUSION: device_key_pressed(GLFW_KEY_F3); break;
-    case SHADER_UV       : device_key_pressed(GLFW_KEY_F4); break;
-    case SHADER_TEXCOORDS: device_key_pressed(GLFW_KEY_F8); break;
-    case SHADER_TEXCOORDS_GRID: device_key_pressed(GLFW_KEY_F8); device_key_pressed(GLFW_KEY_F8); break;
-    case SHADER_NG       : device_key_pressed(GLFW_KEY_F5); break;
-    case SHADER_CYCLES   : device_key_pressed(GLFW_KEY_F9); break;
-    case SHADER_GEOMID   : device_key_pressed(GLFW_KEY_F6); break;
-    case SHADER_GEOMID_PRIMID: device_key_pressed(GLFW_KEY_F7); break;
-    case SHADER_AMBIENT_OCCLUSION: device_key_pressed(GLFW_KEY_F11); break;
+    case SHADER_DEFAULT  : renderFrame = renderFrameStandard; break;
+    case SHADER_EYELIGHT : renderFrame = renderFrameEyeLight; break;
+    case SHADER_OCCLUSION: renderFrame = renderFrameOcclusion; break;
+    case SHADER_UV       : renderFrame = renderFrameUV; break;
+    case SHADER_TEXCOORDS: renderFrame = renderFrameTexCoords; render_texcoords_mode = 0; break;
+    case SHADER_TEXCOORDS_GRID: renderFrame = renderFrameTexCoords; render_texcoords_mode = 1; break;
+    case SHADER_NG       : renderFrame = renderFrameNg; break;
+    case SHADER_CYCLES   : renderFrame = renderFrameCycles; break;
+    case SHADER_GEOMID   : renderFrame = renderFrameGeomID; break;
+    case SHADER_GEOMID_PRIMID: renderFrame = renderFrameGeomIDPrimID; break;
+    case SHADER_AMBIENT_OCCLUSION: renderFrame = renderFrameAmbientOcclusion; break;
     };
-
+    
     /* benchmark mode */
     if (numBenchmarkFrames) {
       renderBenchmark();
@@ -1065,65 +1209,16 @@ namespace embree
     if (referenceImageFilename.str() != "")
       compareToReferenceImage(referenceImageFilename);
 
+#if defined(USE_GLFW)
+    
     /* interactive mode */
     if (interactive)
-    {
-      window_width = width;
-      window_height = height;
-      glfwSetErrorCallback(errorFunc);
-      glfwInit();
-      glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,2);
-      glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,0);
-     
-      if (fullscreen) window = createFullScreenWindow();
-      else            window = createStandardWindow(width,height);
-     
-      glfwMakeContextCurrent(window);
-      glfwSwapInterval(1);
-      reshapeFunc(window,0,0);
-
-      // Setup ImGui binding
-      ImGui::CreateContext();
-      ImGuiIO& io = ImGui::GetIO(); (void)io;
-      //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-      ImGui_ImplGlfwGL2_Init(window, false);
-      
-      // Setup style
-      ImGui::StyleColorsDark();
-      //ImGui::StyleColorsClassic();
-      
-      // Load Fonts
-      // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them. 
-      // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple. 
-      // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-      // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-      // - Read 'misc/fonts/README.txt' for more instructions and details.
-      // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-      //io.Fonts->AddFontDefault();
-      //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-      //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-      //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-      //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-      //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-      //IM_ASSERT(font != NULL);
-      
-      while (!glfwWindowShouldClose(window))
-      {
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-        glfwPollEvents();
-
-        displayFunc();
-      }
-
-      ImGui_ImplGlfwGL2_Shutdown();
-      ImGui::DestroyContext();
-      
-      glfwDestroyWindow(window);
-      glfwTerminate();
-    }
+      renderInteractive();
+    
+#else
+    if (interactive) 
+      std::cout << "GLFW is disabled, you can only render to disk using -o command line option." << std::endl;
+#endif
   }
 
   int TutorialApplication::main(int argc, char** argv) try

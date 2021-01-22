@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "scenegraph.h"
 #include "xml_loader.h"
@@ -73,7 +60,7 @@ namespace embree
   void SceneGraph::MaterialNode::print(std::ostream& cout, int depth) {
     cout << "MaterialNode { closed = " << closed << " }" << std::endl;
   }
-
+  
   void SceneGraph::LightNode::print(std::ostream& cout, int depth) {
     cout << "LightNode { closed = " << closed << " }" << std::endl;
   }
@@ -517,14 +504,16 @@ namespace embree
 
     if (type == RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BEZIER_CURVE ||
         type == RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE ||
-        type == RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE)
+        type == RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE ||
+        type == RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE)
     {
       if (!normals.size())
         THROW_RUNTIME_ERROR("normal array required for oriented curve");
 
       for (const auto& n : normals) 
-        if (n.size() != N) 
+        if (n.size() != N) {
           THROW_RUNTIME_ERROR("incompatible normal array size");
+        }
     }
     else
     {
@@ -562,7 +551,8 @@ namespace embree
     }
 
     if (type == RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE ||
-        //type == RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE ||
+        type == RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE ||
+        type == RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE ||
         //type == RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_LINEAR_CURVE ||
         type == RTC_GEOMETRY_TYPE_FLAT_HERMITE_CURVE ||
         type == RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE ||
@@ -607,9 +597,9 @@ namespace embree
     }
   }
 
-  avector<Vec3fa> bspline_to_bezier_helper(const std::vector<SceneGraph::HairSetNode::Hair>& indices, const avector<Vec3fa>& positions)
+  avector<Vec3ff> bspline_to_bezier_helper(const std::vector<SceneGraph::HairSetNode::Hair>& indices, const avector<Vec3ff>& positions)
   {
-    avector<Vec3fa> positions_o;
+    avector<Vec3ff> positions_o;
     positions_o.resize(4*indices.size());
     for (size_t i=0; i<indices.size(); i++) 
     {
@@ -618,17 +608,17 @@ namespace embree
       const vfloat4 v1 = vfloat4::loadu(&positions[idx+1]);
       const vfloat4 v2 = vfloat4::loadu(&positions[idx+2]);
       const vfloat4 v3 = vfloat4::loadu(&positions[idx+3]);
-      positions_o[4*i+0] = Vec3fa((1.0f/6.0f)*v0 + (2.0f/3.0f)*v1 + (1.0f/6.0f)*v2);
-      positions_o[4*i+1] = Vec3fa((2.0f/3.0f)*v1 + (1.0f/3.0f)*v2);
-      positions_o[4*i+2] = Vec3fa((1.0f/3.0f)*v1 + (2.0f/3.0f)*v2);
-      positions_o[4*i+3] = Vec3fa((1.0f/6.0f)*v1 + (2.0f/3.0f)*v2 + (1.0f/6.0f)*v3);
+      positions_o[4*i+0] = Vec3ff((1.0f/6.0f)*v0 + (2.0f/3.0f)*v1 + (1.0f/6.0f)*v2);
+      positions_o[4*i+1] = Vec3ff((2.0f/3.0f)*v1 + (1.0f/3.0f)*v2);
+      positions_o[4*i+2] = Vec3ff((1.0f/3.0f)*v1 + (2.0f/3.0f)*v2);
+      positions_o[4*i+3] = Vec3ff((1.0f/6.0f)*v1 + (2.0f/3.0f)*v2 + (1.0f/6.0f)*v3);
     }
     return positions_o;
   }
 
-  avector<Vec3fa> bezier_to_bspline_helper(const std::vector<SceneGraph::HairSetNode::Hair>& indices, const avector<Vec3fa>& positions)
+  avector<Vec3ff> bezier_to_bspline_helper(const std::vector<SceneGraph::HairSetNode::Hair>& indices, const avector<Vec3ff>& positions)
   {
-    avector<Vec3fa> positions_o;
+    avector<Vec3ff> positions_o;
     positions_o.resize(4*indices.size());
     for (size_t i=0; i<indices.size(); i++) 
     {
@@ -637,18 +627,18 @@ namespace embree
       vfloat4 v1 = vfloat4::loadu(&positions[idx+1]);
       vfloat4 v2 = vfloat4::loadu(&positions[idx+2]);
       vfloat4 v3 = vfloat4::loadu(&positions[idx+3]);
-      positions_o[4*i+0] = Vec3fa( 6.0f*v0 - 7.0f*v1 + 2.0f*v2);
-      positions_o[4*i+1] = Vec3fa( 2.0f*v1 - 1.0f*v2);
-      positions_o[4*i+2] = Vec3fa(-1.0f*v1 + 2.0f*v2);
-      positions_o[4*i+3] = Vec3fa( 2.0f*v1 - 7.0f*v2 + 6.0f*v3);
+      positions_o[4*i+0] = Vec3ff( 6.0f*v0 - 7.0f*v1 + 2.0f*v2);
+      positions_o[4*i+1] = Vec3ff( 2.0f*v1 - 1.0f*v2);
+      positions_o[4*i+2] = Vec3ff(-1.0f*v1 + 2.0f*v2);
+      positions_o[4*i+3] = Vec3ff( 2.0f*v1 - 7.0f*v2 + 6.0f*v3);
     }
     return positions_o;
   }
 
-  std::pair<avector<Vec3fa>,avector<Vec3fa>> bezier_to_hermite_helper(const std::vector<SceneGraph::HairSetNode::Hair>& indices, const avector<Vec3fa>& positions)
+  std::pair<avector<Vec3ff>,avector<Vec3ff>> bezier_to_hermite_helper(const std::vector<SceneGraph::HairSetNode::Hair>& indices, const avector<Vec3ff>& positions)
   {
-    avector<Vec3fa> positions_o; positions_o.resize(2*indices.size());
-    avector<Vec3fa> tangents_o;  tangents_o.resize(2*indices.size());
+    avector<Vec3ff> positions_o; positions_o.resize(2*indices.size());
+    avector<Vec3ff> tangents_o;  tangents_o.resize(2*indices.size());
     
     for (size_t i=0; i<indices.size(); i++) 
     {
@@ -657,10 +647,10 @@ namespace embree
       vfloat4 v1 = vfloat4::loadu(&positions[idx+1]);
       vfloat4 v2 = vfloat4::loadu(&positions[idx+2]);
       vfloat4 v3 = vfloat4::loadu(&positions[idx+3]);
-      positions_o[2*i+0] = Vec3fa(v0);
-      positions_o[2*i+1] = Vec3fa(v3);
-      tangents_o[2*i+0] = Vec3fa(3.0f*(v1-v0));
-      tangents_o[2*i+1] = Vec3fa(3.0f*(v3-v2));
+      positions_o[2*i+0] = Vec3ff(v0);
+      positions_o[2*i+1] = Vec3ff(v3);
+      tangents_o[2*i+0] = Vec3ff(3.0f*(v1-v0));
+      tangents_o[2*i+1] = Vec3ff(3.0f*(v3-v2));
     }
     return std::make_pair(positions_o,tangents_o);
   }
@@ -725,14 +715,14 @@ namespace embree
       type = RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE;
   }
 
-  bool test_location(const std::vector<avector<Vec3fa>>& in, ssize_t ipos, std::vector<avector<Vec3fa>>& out, ssize_t opos)
+  bool test_location(const std::vector<avector<Vec3ff>>& in, ssize_t ipos, std::vector<avector<Vec3ff>>& out, ssize_t opos)
   {
     if (opos < 0) 
       return false;
 
     for (ssize_t i=ipos, j=opos; i<ipos+4 && j<(ssize_t)out[0].size(); i++, j++) {
       for (size_t k=0; k<in.size(); k++) {
-        if (any(abs((vfloat4)in[k][i]-(vfloat4)out[k][j]) > 0.01f*(vfloat4)max(abs(in[k][i]),abs(out[k][j]))))
+        if (any(abs((vfloat4)in[k][i].m128-(vfloat4)out[k][j].m128) > 0.01f*(vfloat4)max(abs(in[k][i]),abs(out[k][j])).m128))
           return false;
       }
     }
@@ -741,7 +731,7 @@ namespace embree
   
   void SceneGraph::HairSetNode::compact_vertices()
   {
-    std::vector<avector<Vec3fa>> positions_o(positions.size());
+    std::vector<avector<Vec3ff>> positions_o(positions.size());
     for (size_t i=0; i<positions.size(); i++)
       positions_o.reserve(positions[i].size());
     
@@ -962,16 +952,16 @@ namespace embree
     }
     else if (Ref<SceneGraph::HairSetNode> mesh = node.dynamicCast<SceneGraph::HairSetNode>()) 
     {
-      avector<Vec3fa> positions1;
+      avector<Vec3ff> positions1;
       for (auto P : mesh->positions.back()) 
-        positions1.push_back(P+dP);
+        positions1.push_back(P+Vec3ff(dP,0.0f));
       mesh->positions.push_back(std::move(positions1));
     }
     else if (Ref<SceneGraph::PointSetNode> mesh = node.dynamicCast<SceneGraph::PointSetNode>())
     {
-      avector<Vec3fa> positions1;
+      avector<Vec3ff> positions1;
       for (auto P : mesh->positions.back())
-        positions1.push_back(P+dP);
+        positions1.push_back(P+Vec3ff(dP,0.0f));
       mesh->positions.push_back(std::move(positions1));
 
       if (mesh->normals.size())
@@ -1028,21 +1018,21 @@ namespace embree
     }
     else if (Ref<SceneGraph::HairSetNode> mesh = node.dynamicCast<SceneGraph::HairSetNode>()) 
     {
-      avector<Vec3fa> positions = std::move(mesh->positions[0]);
+      avector<Vec3ff> positions = std::move(mesh->positions[0]);
       mesh->positions.clear();
       for (size_t t=0; t<motion_vector.size(); t++) {
-        avector<Vec3fa> tpositions(positions.size());
-        for (size_t i=0; i<positions.size(); i++) tpositions[i] = positions[i] + motion_vector[t];
+        avector<Vec3ff> tpositions(positions.size());
+        for (size_t i=0; i<positions.size(); i++) tpositions[i] = positions[i] + Vec3ff(motion_vector[t],0.0f);
         mesh->positions.push_back(std::move(tpositions));
       }
     }
     else if (Ref<SceneGraph::PointSetNode> mesh = node.dynamicCast<SceneGraph::PointSetNode>())
     {
-      avector<Vec3fa> positions = std::move(mesh->positions[0]);
+      avector<Vec3ff> positions = std::move(mesh->positions[0]);
       mesh->positions.clear();
       for (size_t t=0; t<motion_vector.size(); t++) {
-        avector<Vec3fa> tpositions(positions.size());
-        for (size_t i=0; i<positions.size(); i++) tpositions[i] = positions[i] + motion_vector[t];
+        avector<Vec3ff> tpositions(positions.size());
+        for (size_t i=0; i<positions.size(); i++) tpositions[i] = positions[i] + Vec3ff(motion_vector[t],0.0f);
         mesh->positions.push_back(std::move(tpositions));
       }
       if (mesh->normals.size()) {
@@ -1131,6 +1121,9 @@ namespace embree
       mesh->time_range = time_range;
     }
     else if (Ref<SceneGraph::HairSetNode> mesh = node.dynamicCast<SceneGraph::HairSetNode>()) {
+      mesh->time_range = time_range;
+    }
+    else if (Ref<SceneGraph::PointSetNode> mesh = node.dynamicCast<SceneGraph::PointSetNode>()) {
       mesh->time_range = time_range;
     }
     else if (Ref<SceneGraph::SubdivMeshNode> mesh = node.dynamicCast<SceneGraph::SubdivMeshNode>()) {
@@ -1580,10 +1573,9 @@ namespace embree
     }
     else if (Ref<SceneGraph::HairSetNode> hmesh = node.dynamicCast<SceneGraph::HairSetNode>()) 
     {
-      //if (hmesh->type == RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE) // FIXME: not supported yet
-      //  hmesh->type = RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE;
-      //else
-      if (hmesh->type == RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE)
+      if (hmesh->type == RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE)
+        hmesh->type = RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE;
+      else if (hmesh->type == RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE)
         hmesh->type = RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE;
       else if (hmesh->type == RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE)
         hmesh->type = RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE;
@@ -1605,10 +1597,9 @@ namespace embree
     }
     else if (Ref<SceneGraph::HairSetNode> hmesh = node.dynamicCast<SceneGraph::HairSetNode>()) 
     {
-      //if (hmesh->type == RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE) // FIXME: not supported yet
-      //  hmesh->type = RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE;
-      //else
-      if (hmesh->type == RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE)
+      if (hmesh->type == RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE)
+        hmesh->type = RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE;
+      else if (hmesh->type == RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE)
         hmesh->type = RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE;
       else if (hmesh->type == RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE)
         hmesh->type = RTC_GEOMETRY_TYPE_FLAT_BSPLINE_CURVE;

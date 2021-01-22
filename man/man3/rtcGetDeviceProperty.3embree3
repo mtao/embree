@@ -86,6 +86,11 @@ back face culling is enabled.
 This is only the case if Embree is compiled with
 \f[C]EMBREE_BACKFACE_CULLING\f[] enabled.
 .IP \[bu] 2
+\f[C]RTC_DEVICE_PROPERTY_COMPACT_POLYS_ENABLED\f[]: Queries whether
+compact polys is enabled.
+This is only the case if Embree is compiled with
+\f[C]EMBREE_COMPACT_POLYS\f[] enabled.
+.IP \[bu] 2
 \f[C]RTC_DEVICE_PROPERTY_FILTER_FUNCTION_SUPPORTED\f[]: Queries whether
 filter functions are supported, which is the case if Embree is compiled
 with \f[C]EMBREE_FILTER_FUNCTION\f[] enabled.
@@ -130,7 +135,7 @@ Intel Threading Building Blocks (TBB)
 Parallel Patterns Library (PPL)
 .RE
 .IP \[bu] 2
-\f[C]RTC_DEVICE_PROPERTY_COMMIT_JOIN_SUPPORTED\f[]: Queries whether
+\f[C]RTC_DEVICE_PROPERTY_JOIN_COMMIT_SUPPORTED\f[]: Queries whether
 \f[C]rtcJoinCommitScene\f[] is supported.
 This is not the case when Embree is compiled with PPL or older versions
 of TBB.

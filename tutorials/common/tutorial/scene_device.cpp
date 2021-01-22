@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "scene_device.h"
 #include "application.h"
@@ -23,6 +10,7 @@ namespace embree
 {
   extern "C" {
     int g_instancing_mode = SceneGraph::INSTANCING_NONE;
+    float g_min_width_max_radius_scale = 1.0f;
   }
 
   void deleteGeometry(ISPCGeometry* geom)
@@ -264,11 +252,11 @@ namespace embree
   }
   
   ISPCHairSet::ISPCHairSet (TutorialScene* scene_in, RTCGeometryType type, Ref<SceneGraph::HairSetNode> in)
-    : geom(CURVES), normals(nullptr), tangents(nullptr), dnormals(nullptr), type(type)
+    : geom(CURVES), normals(nullptr), tangents(nullptr), dnormals(nullptr), hairs(nullptr), flags(nullptr), type(type)
   {
     positions = new Vec3fa*[in->numTimeSteps()];
     for (size_t i=0; i<in->numTimeSteps(); i++)
-      positions[i] = in->positions[i].data();
+      positions[i] = (Vec3fa*) in->positions[i].data();
 
     if (in->normals.size()) {
       normals = new Vec3fa*[in->numTimeSteps()];
@@ -279,7 +267,7 @@ namespace embree
     if (in->tangents.size()) {
       tangents = new Vec3fa*[in->numTimeSteps()];
       for (size_t i=0; i<in->numTimeSteps(); i++)
-        tangents[i] = in->tangents[i].data();
+        tangents[i] = (Vec3fa*) in->tangents[i].data();
     }
 
     if (in->dnormals.size()) {
@@ -289,7 +277,10 @@ namespace embree
     }
     
     hairs = (ISPCHair*) in->hairs.data();
-    flags = (unsigned char*)in->flags.data();
+
+    if (in->flags.size())
+      flags = (unsigned char*)in->flags.data();
+    
     startTime = in->time_range.lower;
     endTime   = in->time_range.upper;
     numTimeSteps = (unsigned) in->numTimeSteps();
@@ -311,7 +302,7 @@ namespace embree
   {
     positions = new Vec3fa*[in->numTimeSteps()];
     for (size_t i=0; i<in->numTimeSteps(); i++)
-      positions[i] = in->positions[i].data();
+      positions[i] = (Vec3fa*) in->positions[i].data();
 
     if (in->normals.size()) {
       normals = new Vec3fa*[in->numTimeSteps()];
@@ -319,6 +310,8 @@ namespace embree
         normals[i] = in->normals[i].data();
     }
 
+    startTime = in->time_range.lower;
+    endTime   = in->time_range.upper;
     numTimeSteps = (unsigned) in->numTimeSteps();
     numVertices = (unsigned) in->numVertices();
     geom.materialID = scene_in->materialID(in->material);
@@ -536,10 +529,18 @@ namespace embree
     }
     
     rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_INDEX, 0, RTC_FORMAT_UINT, mesh->hairs, 0, sizeof(ISPCHair), mesh->numHairs);
-    if (mesh->type != RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE)
+    if (mesh->type != RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE && mesh->type != RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE && mesh->type != RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE) {
       rtcSetGeometryTessellationRate(geom,(float)mesh->tessellation_rate);
+    }
+    
+#if RTC_MIN_WIDTH
+    if (g_min_width_max_radius_scale >= 1.0f)
+      rtcSetGeometryMaxRadiusScale(geom,g_min_width_max_radius_scale);
+#endif
 
-    rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_FLAGS, 0, RTC_FORMAT_UCHAR, mesh->flags, 0, sizeof(unsigned char), mesh->numHairs);
+    if (mesh->flags) {
+      rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_FLAGS, 0, RTC_FORMAT_UCHAR, mesh->flags, 0, sizeof(unsigned char), mesh->numHairs);
+    }
     rtcSetGeometryUserData(geom, mesh);
     rtcCommitGeometry(geom);
 
@@ -554,6 +555,7 @@ namespace embree
   {
     RTCGeometry geom = rtcNewGeometry(device, mesh->type);
     rtcSetGeometryTimeStepCount(geom,mesh->numTimeSteps);
+    rtcSetGeometryTimeRange(geom,mesh->startTime,mesh->endTime);
     rtcSetGeometryBuildQuality(geom, quality);
 
     for (unsigned int t=0; t<mesh->numTimeSteps; t++) {
@@ -564,6 +566,11 @@ namespace embree
         rtcSetSharedGeometryBuffer(geom, RTC_BUFFER_TYPE_NORMAL, t, RTC_FORMAT_FLOAT3, mesh->normals[t], 0, sizeof(Vec3fa), mesh->numVertices);
       }
     }
+#if RTC_MIN_WIDTH
+    if (g_min_width_max_radius_scale >= 1.0f)
+      rtcSetGeometryMaxRadiusScale(geom,g_min_width_max_radius_scale);
+#endif
+      
     rtcSetGeometryUserData(geom, mesh);
     rtcCommitGeometry(geom);
 

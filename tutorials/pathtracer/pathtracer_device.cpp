@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "../common/math/random_sampler.h"
 #include "../common/math/sampling.h"
@@ -240,7 +227,7 @@ struct Lambertian
 inline Vec3fa Lambertian__eval(const Lambertian* This,
                               const Vec3fa &wo, const DifferentialGeometry &dg, const Vec3fa &wi)
 {
-  return This->R * (1.0f/(float)(float(pi))) * clamp(dot(wi,dg.Ns));
+  return This->R * (1.0f/(float)(float(M_PI))) * clamp(dot(wi,dg.Ns));
 }
 
 inline Vec3fa Lambertian__sample(const Lambertian* This,
@@ -388,7 +375,7 @@ inline float AnisotropicBlinn__eval(const AnisotropicBlinn* This, const Vec3fa& 
 
 /*! Samples the distribution. \param s is the sample location
  *  provided by the caller. */
-inline Vec3fa AnisotropicBlinn__sample(const AnisotropicBlinn* This, const float sx, const float sy)
+inline Vec3ff AnisotropicBlinn__sample(const AnisotropicBlinn* This, const float sx, const float sy)
 {
   const float phi =float(two_pi)*sx;
   const float sinPhi0 = sqrtf(This->nx+1)*sinf(phi);
@@ -402,7 +389,7 @@ inline Vec3fa AnisotropicBlinn__sample(const AnisotropicBlinn* This, const float
   const float pdf = This->norm1*powf(cosTheta,n);
   const Vec3fa h = Vec3fa(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
   const Vec3fa wh = h.x*This->dx + h.y*This->dy + h.z*This->dz;
-  return Vec3fa(wh,pdf);
+  return Vec3ff(wh,pdf);
 }
 
 inline Vec3fa AnisotropicBlinn__eval(const AnisotropicBlinn* This, const Vec3fa& wo, const Vec3fa& wi)
@@ -426,7 +413,7 @@ inline Vec3fa AnisotropicBlinn__sample(const AnisotropicBlinn* This, const Vec3f
 {
   //wi = Vec3fa(reflect(normalize(wo),normalize(dz)),1.0f); return Kr;
   //wi = Vec3fa(neg(wo),1.0f); return Kt;
-  const Vec3fa wh = AnisotropicBlinn__sample(This,sx,sy);
+  const Vec3ff wh = AnisotropicBlinn__sample(This,sx,sy);
   //if (dot(wo,wh) < 0.0f) return Vec3fa(0.0f,0.0f);
 
   /* reflection */
@@ -509,7 +496,7 @@ Vec3fa OBJMaterial__eval(ISPCOBJMaterial* material, const BRDF& brdf, const Vec3
   const float Ms = max(max(brdf.Ks.x,brdf.Ks.y),brdf.Ks.z);
   const float Mt = max(max(brdf.Kt.x,brdf.Kt.y),brdf.Kt.z);
   if (Md > 0.0f) {
-    R = R + (1.0f/float(pi)) * clamp(dot(wi,dg.Ns)) * brdf.Kd;
+    R = R + (1.0f/float(M_PI)) * clamp(dot(wi,dg.Ns)) * brdf.Kd;
   }
   if (Ms > 0.0f) {
     const Sample3f refl = make_Sample3f(reflect(wo,dg.Ns),1.0f);
@@ -868,7 +855,7 @@ void occlusionFilterOBJ(const RTCFilterFunctionNArguments* args);
 void occlusionFilterHair(const RTCFilterFunctionNArguments* args);
 
 /* accumulation buffer */
-Vec3fa* g_accu = nullptr;
+Vec3ff* g_accu = nullptr;
 unsigned int g_accu_width = 0;
 unsigned int g_accu_height = 0;
 unsigned int g_accu_count = 0;
@@ -882,12 +869,14 @@ extern "C" int g_instancing_mode;
 
 bool g_animation = true;
 bool g_use_smooth_normals = false;
+#if 0
 void device_key_pressed_handler(int key)
 {
   if (key == 32  /* */) g_animation = !g_animation;
   if (key == 110 /*n*/) { g_use_smooth_normals = !g_use_smooth_normals; g_changed = true; }
   else device_key_pressed_default(key);
 }
+#endif
 
 void assignShaders(ISPCGeometry* geometry)
 {
@@ -1277,6 +1266,11 @@ void postIntersectGeometry(const Ray& ray, DifferentialGeometry& dg, ISPCGeometr
   else if (geometry->type == GRID_MESH)
   {
     ISPCGridMesh* mesh = (ISPCGridMesh*) geometry;
+    materialID = mesh->geom.materialID;
+  }
+  else if (geometry->type == POINTS)
+  {
+    ISPCPointSet* mesh = (ISPCPointSet*) geometry;
     materialID = mesh->geom.materialID;
   }
   else if (geometry->type == CURVES)
@@ -1721,7 +1715,7 @@ void renderTileStandard(int taskIndex,
     Vec3fa color = renderPixelStandard((float)x,(float)y,camera,g_stats[threadIndex]);
 
     /* write color to framebuffer */
-    Vec3fa accu_color = g_accu[y*width+x] + Vec3fa(color.x,color.y,color.z,1.0f); g_accu[y*width+x] = accu_color;
+    Vec3ff accu_color = g_accu[y*width+x] + Vec3ff(color.x,color.y,color.z,1.0f); g_accu[y*width+x] = accu_color;
     float f = rcp(max(0.001f,accu_color.w));
     unsigned int r = (unsigned int) (255.01f * clamp(accu_color.x*f,0.0f,1.0f));
     unsigned int g = (unsigned int) (255.01f * clamp(accu_color.y*f,0.0f,1.0f));
@@ -1739,7 +1733,7 @@ void renderTileTask (int taskIndex, int threadIndex, int* pixels,
                          const int numTilesX,
                          const int numTilesY)
 {
-  renderTile(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  renderTileStandard(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
 }
 
 
@@ -1813,11 +1807,23 @@ extern "C" void device_init (char* cfg)
   g_accu_vz = Vec3fa(0.0f);
   g_accu_p  = Vec3fa(0.0f);
 
-  /* set start render mode */
-  renderTile = renderTileStandard;
-  key_pressed_handler = device_key_pressed_handler;
-
 } // device_init
+
+extern "C" void renderFrameStandard (int* pixels,
+                          const unsigned int width,
+                          const unsigned int height,
+                          const float time,
+                          const ISPCCamera& camera)
+{
+  /* render image */
+  const int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
+  const int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
+  parallel_for(size_t(0),size_t(numTilesX*numTilesY),[&](const range<size_t>& range) {
+    const int threadIndex = (int)TaskScheduler::threadIndex();
+    for (size_t i=range.begin(); i<range.end(); i++)
+      renderTileTask((int)i,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  }); 
+}
 
 /* called by the C++ code to render */
 extern "C" void device_render (int* pixels,
@@ -1836,11 +1842,11 @@ extern "C" void device_render (int* pixels,
   /* create accumulator */
   if (g_accu_width != width || g_accu_height != height) {
     alignedFree(g_accu);
-    g_accu = (Vec3fa*) alignedMalloc(width*height*sizeof(Vec3fa),16);
+    g_accu = (Vec3ff*) alignedMalloc(width*height*sizeof(Vec3ff),16);
     g_accu_width = width;
     g_accu_height = height;
     for (unsigned int i=0; i<width*height; i++)
-      g_accu[i] = Vec3fa(0.0f);
+      g_accu[i] = Vec3ff(0.0f);
   }
 
   /* reset accumulator */
@@ -1854,7 +1860,7 @@ extern "C" void device_render (int* pixels,
   {
     g_accu_count=0;
     for (unsigned int i=0; i<width*height; i++)
-      g_accu[i] = Vec3fa(0.0f);
+      g_accu[i] = Vec3ff(0.0f);
 
     if (g_subdiv_mode) {
       updateEdgeLevels(g_ispc_scene,camera.xfm.p);
@@ -1864,15 +1870,6 @@ extern "C" void device_render (int* pixels,
   else
     g_accu_count++;
 
-  /* render image */
-  const int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
-  const int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
-  parallel_for(size_t(0),size_t(numTilesX*numTilesY),[&](const range<size_t>& range) {
-    const int threadIndex = (int)TaskScheduler::threadIndex();
-    for (size_t i=range.begin(); i<range.end(); i++)
-      renderTileTask((int)i,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
-  }); 
-  //rtcDebug();
 } // device_render
 
 /* called by the C++ code for cleanup */

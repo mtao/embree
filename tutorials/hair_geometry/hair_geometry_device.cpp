@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "../common/math/random_sampler.h"
 #include "../common/tutorial/tutorial_device.h"
@@ -22,7 +9,7 @@
 namespace embree {
 
 /* accumulation buffer */
-Vec3fa* g_accu = nullptr;
+Vec3ff* g_accu = nullptr;
 unsigned int g_accu_width = 0;
 unsigned int g_accu_height = 0;
 unsigned int g_accu_count = 0;
@@ -50,14 +37,6 @@ void occlusionFilter(const RTCFilterFunctionNArguments* args);
 extern "C" ISPCScene* g_ispc_scene;
 RTCScene g_scene = nullptr;
 
-/*! Uniform hemisphere sampling. Up direction is the z direction. */
-Vec3fa sampleSphere(const float u, const float v)
-{
-  const float phi = 2.0f*(float)pi * u;
-  const float cosTheta = 1.0f - 2.0f * v, sinTheta = 2.0f * sqrt(v * (1.0f - v));
-  return Vec3fa(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta, float(one_over_four_pi));
-}
-
 void convertTriangleMesh(ISPCTriangleMesh* mesh, RTCScene scene_out)
 {
   RTCGeometry geom = rtcNewGeometry (g_device, RTC_GEOMETRY_TYPE_TRIANGLE);
@@ -78,6 +57,8 @@ void convertHairSet(ISPCHairSet* hair, RTCScene scene_out)
     rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_VERTEX,t,RTC_FORMAT_FLOAT4,hair->positions[t],0,sizeof(Vertex),hair->numVertices);
   }
   rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_INDEX,0,RTC_FORMAT_UINT,hair->hairs,0,sizeof(ISPCHair),hair->numHairs);
+  if (hair->flags)
+    rtcSetSharedGeometryBuffer(geom,RTC_BUFFER_TYPE_FLAGS,0,RTC_FORMAT_UCHAR,hair->flags,0,sizeof(char),hair->numHairs);
   rtcSetGeometryOccludedFilterFunction(geom,occlusionFilter);
   rtcSetGeometryTessellationRate(geom,(float)hair->tessellation_rate);
   rtcCommitGeometry(geom);
@@ -156,7 +137,7 @@ inline float AnisotropicBlinn__eval(const AnisotropicBlinn* This, const Vec3fa& 
 
 /*! Samples the distribution. \param s is the sample location
  *  provided by the caller. */
-inline Vec3fa AnisotropicBlinn__sample(const AnisotropicBlinn* This, const float sx, const float sy)
+inline Vec3ff AnisotropicBlinn__sample(const AnisotropicBlinn* This, const float sx, const float sy)
 {
   const float phi =float(two_pi)*sx;
   const float sinPhi0 = sqrtf(This->nx+1)*sinf(phi);
@@ -170,7 +151,7 @@ inline Vec3fa AnisotropicBlinn__sample(const AnisotropicBlinn* This, const float
   const float pdf = This->norm1*powf(cosTheta,n);
   const Vec3fa h = Vec3fa(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
   const Vec3fa wh = h.x*This->dx + h.y*This->dy + h.z*This->dz;
-  return Vec3fa(wh,pdf);
+  return Vec3ff(wh,pdf);
 }
 
 inline Vec3fa AnisotropicBlinn__eval(const AnisotropicBlinn* This, const Vec3fa& wo, const Vec3fa& wi)
@@ -190,23 +171,23 @@ inline Vec3fa AnisotropicBlinn__eval(const AnisotropicBlinn* This, const Vec3fa&
   }
 }
 
-inline Vec3fa AnisotropicBlinn__sample(const AnisotropicBlinn* This, const Vec3fa& wo, Vec3fa& wi, const float sx, const float sy, const float sz)
+inline Vec3fa AnisotropicBlinn__sample(const AnisotropicBlinn* This, const Vec3fa& wo, Vec3ff& wi, const float sx, const float sy, const float sz)
 {
   //wi = Vec3fa(reflect(normalize(wo),normalize(dz)),1.0f); return Kr;
   //wi = Vec3fa(neg(wo),1.0f); return Kt;
-  const Vec3fa wh = AnisotropicBlinn__sample(This,sx,sy);
+  const Vec3ff wh = AnisotropicBlinn__sample(This,sx,sy);
   //if (dot(wo,wh) < 0.0f) return Vec3fa(0.0f,0.0f);
 
   /* reflection */
   if (sz < This->side) {
-    wi = Vec3fa(reflect(wo,Vec3fa(wh)),wh.w*This->side);
+    wi = Vec3ff(reflect(wo,Vec3fa(wh)),wh.w*This->side);
     const float cosThetaI = dot(Vec3fa(wi),This->dz);
     return This->Kr * AnisotropicBlinn__eval(This,Vec3fa(wh)) * abs(cosThetaI);
   }
 
   /* transmission */
   else {
-    wi = Vec3fa(reflect(reflect(wo,Vec3fa(wh)),This->dz),wh.w*(1-This->side));
+    wi = Vec3ff(reflect(reflect(wo,Vec3fa(wh)),This->dz),wh.w*(1-This->side));
     const float cosThetaI = dot(Vec3fa(wi),This->dz);
     return This->Kt * AnisotropicBlinn__eval(This,Vec3fa(wh)) * abs(cosThetaI);
   }
@@ -355,7 +336,7 @@ Vec3fa renderPixelStandard(float x, float y, const ISPCCamera& camera, RayStats&
 
 #if 1
     /* sample BRDF */
-    Vec3fa wi;
+    Vec3ff wi;
     float ru = RandomSampler_get1D(sampler);
     float rv = RandomSampler_get1D(sampler);
     float rw = RandomSampler_get1D(sampler);
@@ -364,8 +345,8 @@ Vec3fa renderPixelStandard(float x, float y, const ISPCCamera& camera, RayStats&
 
     /* calculate secondary ray and offset it out of the hair */
     float sign = dot(Vec3fa(wi),brdf.dz) < 0.0f ? -1.0f : 1.0f;
-    ray.org = ray.org + ray.tfar*ray.dir + sign*eps*brdf.dz;
-    ray.dir = Vec3fa(wi);
+    ray.org = Vec3ff(ray.org + ray.tfar*ray.dir + sign*eps*brdf.dz);
+    ray.dir = Vec3ff(wi);
     ray.tnear() = 0.001f;
     ray.tfar = inf;
     ray.geomID = RTC_INVALID_GEOMETRY_ID;
@@ -413,7 +394,7 @@ void renderTileStandard(int taskIndex,
     Vec3fa color = renderPixelStandard((float)x,(float)y,camera,g_stats[threadIndex]);
 
     /* write color to framebuffer */
-    Vec3fa accu_color = g_accu[y*width+x] + Vec3fa(color.x,color.y,color.z,1.0f); g_accu[y*width+x] = accu_color;
+    Vec3ff accu_color = g_accu[y*width+x] + Vec3ff(color.x,color.y,color.z,1.0f); g_accu[y*width+x] = accu_color;
     float f = rcp(max(0.001f,accu_color.w));
     unsigned int r = (unsigned int) (255.01f * clamp(accu_color.x*f,0.0f,1.0f));
     unsigned int g = (unsigned int) (255.01f * clamp(accu_color.y*f,0.0f,1.0f));
@@ -431,7 +412,7 @@ void renderTileTask (int taskIndex, int threadIndex, int* pixels,
                          const int numTilesX,
                          const int numTilesY)
 {
-  renderTile(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  renderTileStandard(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
 }
 
 /* called by the C++ code for initialization */
@@ -449,14 +430,25 @@ extern "C" void device_init (char* cfg)
   hair_Kr = 0.2f*hair_K;    //!< reflectivity of hair
   hair_Kt = 0.8f*hair_K;    //!< transparency of hair
 
-  /* set start render mode */
-  renderTile = renderTileStandard;
-  key_pressed_handler = device_key_pressed_default;
-
   /* create scene */
   g_scene = convertScene(g_ispc_scene);
 }
 
+extern "C" void renderFrameStandard (int* pixels,
+                          const unsigned int width,
+                          const unsigned int height,
+                          const float time,
+                          const ISPCCamera& camera)
+{
+  /* render frame */
+  const int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
+  const int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
+  parallel_for(size_t(0),size_t(numTilesX*numTilesY),[&](const range<size_t>& range) {
+    const int threadIndex = (int)TaskScheduler::threadIndex();
+    for (size_t i=range.begin(); i<range.end(); i++)
+      renderTileTask((int)i,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  }); 
+}
 
 /* called by the C++ code to render */
 extern "C" void device_render (int* pixels,
@@ -467,11 +459,11 @@ extern "C" void device_render (int* pixels,
 {
   /* create accumulator */
   if (g_accu_width != width || g_accu_height != height) {
-    g_accu = (Vec3fa*) alignedMalloc(width*height*sizeof(Vec3fa),16);
+    g_accu = (Vec3ff*) alignedMalloc(width*height*sizeof(Vec3ff),16);
     g_accu_width = width;
     g_accu_height = height;
     for (unsigned int i=0; i<width*height; i++)
-      g_accu[i] = Vec3fa(0.0f);
+      g_accu[i] = Vec3ff(0.0f);
   }
 
   /* reset accumulator */
@@ -484,17 +476,8 @@ extern "C" void device_render (int* pixels,
   if (camera_changed) {
     g_accu_count=0;
     for (unsigned int i=0; i<width*height; i++)
-      g_accu[i] = Vec3fa(0.0f);
+      g_accu[i] = Vec3ff(0.0f);
   }
-
-  /* render frame */
-  const int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
-  const int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
-  parallel_for(size_t(0),size_t(numTilesX*numTilesY),[&](const range<size_t>& range) {
-    const int threadIndex = (int)TaskScheduler::threadIndex();
-    for (size_t i=range.begin(); i<range.end(); i++)
-      renderTileTask((int)i,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
-  }); 
 }
 
 /* called by the C++ code for cleanup */

@@ -1,12 +1,10 @@
 #!/usr/bin/python
 
+## Copyright 2009-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
 import sys
-import os
 import ctypes
-import time
-import datetime
-import json
-import socket
 import subprocess
 
 g_cdash = ""
@@ -15,6 +13,10 @@ g_mode = "Experimental"
 g_intensity = 2
 g_debugMode = False
 g_singleConfig = ""
+
+nas_linux = "/NAS/packages/apps"
+nas_macosx = "/net/nassie/mnt/vol/NAS/packages/apps"
+nas_windows = "\\\\vis-nassie.an.intel.com\\NAS\\packages\\apps"
 
 def escape(str):
   str = str.replace("\\",r"\\")
@@ -54,6 +56,7 @@ def runConfig(config):
 
   conf = []  # CMake configuration
   env = []  # shell environment
+  rtcore = [] # rtcore configuration
   
   build = config["build"]
   conf.append("-D CMAKE_BUILD_TYPE="+build+"")
@@ -80,10 +83,7 @@ def runConfig(config):
     conf.append("-D EMBREE_MAX_INSTANCE_LEVEL_COUNT="+config["maxinstancelevelcount"])
 
   #if "package" in config and OS == 'linux': # we need up to date cmake for RPMs to work properly
-  #  env.append("module load cmake")
-
-  nas = "/NAS/packages/apps"
-
+  #  env.append("module load cmake")  
   compiler = config["compiler"]
   platform = config["platform"]
   ispc_ext = "-vs2013"
@@ -91,9 +91,22 @@ def runConfig(config):
     ext = ""
     if platform == "x64":
       ext = " Win64"
-    if (compiler == "V141"):
+    if (compiler == "V142"):
+      conf.append("-G \"Visual Studio 16 2019\"")
+      conf.append("-T \"V142\"")
+      conf.append("-A \"x64\"")
+      ispc_ext = "-vs2015"
+    elif (compiler == "V141"):
       conf.append("-G \"Visual Studio 15 2017"+ext+"\"")
       conf.append("-T \"V141\"")
+      ispc_ext = "-vs2015"
+    elif (compiler == "ICC19-VC141"):
+      conf.append("-G \"Visual Studio 15 2017"+ext+"\"")
+      conf.append("-T \"Intel C++ Compiler 19.0\"")
+      ispc_ext = "-vs2015"
+    elif (compiler == "ICC18-VC141"):
+      conf.append("-G \"Visual Studio 15 2017"+ext+"\"")
+      conf.append("-T \"Intel C++ Compiler 18.0\"")
       ispc_ext = "-vs2015"
     elif (compiler == "V140"):
       conf.append("-G \"Visual Studio 14 2015"+ext+"\"")
@@ -105,12 +118,14 @@ def runConfig(config):
     elif (compiler == "V110"):
       conf.append("-G \"Visual Studio 11 2012"+ext+"\"")
       conf.append("-T \"V110\"")
-    elif (compiler == "ICC"):
-      conf.append("-G \"Visual Studio 12 2013"+ext+"\"")
-      conf.append("-T \"Intel C++ Compiler 17.0\"")
-    elif (compiler == "ICC18"):
-      conf.append("-G \"Visual Studio 12 2013"+ext+"\"")
+    elif (compiler == "ICC19-VC14"):
+      conf.append("-G \"Visual Studio 14 2015"+ext+"\"")
+      conf.append("-T \"Intel C++ Compiler 19.0\"")
+      ispc_ext = "-vs2015"
+    elif (compiler == "ICC18-VC14"):
+      conf.append("-G \"Visual Studio 14 2015"+ext+"\"")
       conf.append("-T \"Intel C++ Compiler 18.0\"")
+      ispc_ext = "-vs2015"
     elif (compiler == "ICC17-VC14"):
       conf.append("-G \"Visual Studio 14 2015"+ext+"\"")
       conf.append("-T \"Intel C++ Compiler 17.0\"")
@@ -145,9 +160,9 @@ def runConfig(config):
     elif (compiler == "CLANG"):
       conf.append("-D CMAKE_CXX_COMPILER=clang++ -D CMAKE_C_COMPILER=clang")
     elif (compiler.startswith("ICC")):
-      conf.append("-D CMAKE_CXX_COMPILER=/NAS/packages/apps/intel/"+compiler[3:]+"/bin/icpc -D CMAKE_C_COMPILER=/NAS/packages/apps/intel/"+compiler[3:]+"/bin/icc")
+      conf.append("-D CMAKE_CXX_COMPILER="+nas_linux+"/intel/"+compiler[3:]+"/bin/icpc -D CMAKE_C_COMPILER="+nas_linux+"/intel/"+compiler[3:]+"/bin/icc")
     elif (compiler.startswith("CLANG")):
-      conf.append("-D CMAKE_CXX_COMPILER=/NAS/packages/apps/clang/v"+compiler[5:]+"/bin/clang++ -D CMAKE_C_COMPILER=/NAS/packages/apps/clang/v"+compiler[5:]+"/bin/clang")
+      conf.append("-D CMAKE_CXX_COMPILER="+nas_linux+"/clang/v"+compiler[5:]+"/bin/clang++ -D CMAKE_C_COMPILER="+nas_linux+"/clang/v"+compiler[5:]+"/bin/clang")
     else:
       raise ValueError('unknown compiler: ' + compiler + '')
     
@@ -157,7 +172,7 @@ def runConfig(config):
     elif (compiler == "CLANG"):
       conf.append("-D CMAKE_CXX_COMPILER=clang++ -D CMAKE_C_COMPILER=clang")
     elif (compiler.startswith("ICC")):
-      conf.append("-D CMAKE_CXX_COMPILER=/NAS/packages/apps/intel/"+compiler[3:]+"-osx/bin/icpc -D CMAKE_C_COMPILER=/NAS/packages/apps/intel/"+compiler[3:]+"-osx/bin/icc")
+      conf.append("-D CMAKE_CXX_COMPILER="+nas_macosx+"/intel/"+compiler[3:]+"-osx/bin/icpc -D CMAKE_C_COMPILER="+nas_macosx+"/intel/"+compiler[3:]+"-osx/bin/icc")
     else:
       raise ValueError('unknown compiler: ' + compiler + '')
 
@@ -173,11 +188,11 @@ def runConfig(config):
       if parse_version(ispc_version) < parse_version("1.11.0"): bin_folder = ""
       
       if OS == "linux":
-        conf.append("-D EMBREE_ISPC_EXECUTABLE=/NAS/packages/apps/ispc/"+ispc_version+"-linux/"+bin_folder+"ispc")
+        conf.append("-D EMBREE_ISPC_EXECUTABLE="+nas_linux+"/ispc/"+ispc_version+"-linux/"+bin_folder+"ispc")
       elif OS == "macosx":
-        conf.append("-D EMBREE_ISPC_EXECUTABLE=/NAS/packages/apps/ispc/"+ispc_version+"-osx/"+bin_folder+"ispc")
+        conf.append("-D EMBREE_ISPC_EXECUTABLE="+nas_macosx+"/ispc/"+ispc_version+"-osx/"+bin_folder+"ispc")
       elif OS == "windows":
-        conf.append("-D EMBREE_ISPC_EXECUTABLE=\\\\vis-nassie.an.intel.com\\NAS\\packages\\apps\\ispc\\"+ispc_version+"-windows"+ispc_ext+"\\"+bin_folder+"ispc.exe")
+        conf.append("-D EMBREE_ISPC_EXECUTABLE="+nas_windows+"\\ispc\\"+ispc_version+"-windows"+ispc_ext+"\\"+bin_folder+"ispc.exe")
       else:
         sys.stderr.write("unknown operating system "+OS)
         sys.exit(1)
@@ -215,7 +230,7 @@ def runConfig(config):
         if tasking == "TBB":
           conf.append("-D EMBREE_TBB_ROOT=/usr")
         elif tasking.startswith("TBB"):
-          conf.append("-D EMBREE_TBB_ROOT=/NAS/packages/apps/tbb/tbb-"+tasking[3:]+"-linux")
+          conf.append("-D EMBREE_TBB_ROOT="+nas_linux+"/tbb/tbb-"+tasking[3:]+"-linux")
         else:
           raise ValueError('unknown tasking system: ' + tasking + '')
       
@@ -223,22 +238,22 @@ def runConfig(config):
         if tasking == "TBB":
           conf.append("-D EMBREE_TBB_ROOT=/opt/local")
         elif tasking.startswith("TBB"):
-          conf.append("-D EMBREE_TBB_ROOT=/NAS/packages/apps/tbb/tbb-"+tasking[3:]+"-osx")
+          conf.append("-D EMBREE_TBB_ROOT="+nas_macosx+"/tbb/tbb-"+tasking[3:]+"-osx")
         else:
           raise ValueError('unknown tasking system: ' + tasking + '')
       
       elif OS == "windows":
         if tasking.startswith("TBB"):
-          tbb_path = "\\\\vis-nassie.an.intel.com\\NAS\\packages\\apps\\tbb\\tbb-"+tasking[3:]+"-windows"          
+          tbb_path = ""+nas_windows+"\\tbb\\tbb-"+tasking[3:]+"-windows"          
         else:
           raise ValueError('unknown tasking system: ' + tasking + '')
 
         conf.append("-D EMBREE_TBB_ROOT="+tbb_path)
         
         if platform == "x64":
-          env.append("set PATH="+tbb_path+"\\bin\\intel64\\vc12;"+tbb_path+"\\bin\\intel64\\vc14;%PATH%")
+          env.append("set PATH="+tbb_path+"\\bin\\intel64\\vc12;"+tbb_path+"\\bin\\intel64\\vc14;"+tbb_path+"\\redist\\intel64\\vc12;"+tbb_path+"\\redist\\intel64\\vc14;%PATH%")
         else:
-          env.append("set PATH="+tbb_path+"\\bin\\ia32\\vc12;"+tbb_path+"\\bin\\ia32\\vc14;%PATH%")
+          env.append("set PATH="+tbb_path+"\\bin\\ia32\\vc12;"+tbb_path+"\\bin\\ia32\\vc14;"+tbb_path+"\\redist\\ia32\\vc12;"+tbb_path+"\\redist\\ia32\\vc14;%PATH%")
 
       else:
         sys.stderr.write("unknown operating system "+OS)
@@ -259,6 +274,8 @@ def runConfig(config):
     conf.append("-D EMBREE_TUTORIALS="+config["TUTORIALS"])
   if "BACKFACE_CULLING" in config:
     conf.append("-D EMBREE_BACKFACE_CULLING="+config["BACKFACE_CULLING"])
+  if "BACKFACE_CULLING_CURVES" in config:
+    conf.append("-D EMBREE_BACKFACE_CULLING_CURVES="+config["BACKFACE_CULLING_CRUVES"])
   if "IGNORE_INVALID_RAYS" in config:
     conf.append("-D EMBREE_IGNORE_INVALID_RAYS="+config["IGNORE_INVALID_RAYS"])
   if "FILTER_FUNCTION" in config:
@@ -285,6 +302,14 @@ def runConfig(config):
     conf.append("-D EMBREE_GEOMETRY_INSTANCE="+config["INSTANCE"])
   if "POINT" in config:
     conf.append("-D EMBREE_GEOMETRY_POINT="+config["POINT"])
+  if "COMPACT_POLYS" in config:
+    conf.append("-D EMBREE_COMPACT_POLYS="+config["COMPACT_POLYS"])
+  if "MIN_WIDTH" in config:
+    conf.append("-D EMBREE_MIN_WIDTH="+config["MIN_WIDTH"])
+  if "GLFW" in config:
+    conf.append("-D EMBREE_TUTORIALS_GLFW="+config["GLFW"])
+  if "frequency_level" in config:
+    rtcore.append("frequency_level="+config["frequency_level"])
 
   if "package" in config:
     conf.append("-D EMBREE_TESTING_PACKAGE=ON")
@@ -292,7 +317,7 @@ def runConfig(config):
     conf.append("-D EMBREE_TUTORIALS_LIBJPEG=OFF")
     conf.append("-D EMBREE_TUTORIALS_LIBPNG=OFF")
     if OS == "linux" and config["package"] == "ZIP":
-      conf.append("-D EMBREE_SIGN_FILE=/NAS/packages/apps/signfile/linux/SignFile")
+      conf.append("-D EMBREE_SIGN_FILE="+nas_linux+"/signfile/linux/SignFile")
       conf.append("-D EMBREE_INSTALL_DEPENDENCIES=ON")
       conf.append("-D EMBREE_ZIP_MODE=ON")
       conf.append("-D CMAKE_SKIP_INSTALL_RPATH=OFF")
@@ -301,14 +326,14 @@ def runConfig(config):
       conf.append("-D CMAKE_INSTALL_DOCDIR=doc")
       conf.append("-D CMAKE_INSTALL_BINDIR=bin")
     elif OS == "linux" and config["package"] == "RPM":
-      conf.append("-D EMBREE_SIGN_FILE=/NAS/packages/apps/signfile/linux/SignFile")
+      conf.append("-D EMBREE_SIGN_FILE="+nas_linux+"/signfile/linux/SignFile")
       conf.append("-D EMBREE_INSTALL_DEPENDENCIES=OFF")
       conf.append("-D EMBREE_ZIP_MODE=OFF")
       conf.append("-D CMAKE_SKIP_INSTALL_RPATH=OFF")
       conf.append("-D CMAKE_INSTALL_PREFIX=/usr")
       conf.append("-D EMBREE_TBB_ROOT=/usr")
     elif OS == "macosx" and config["package"] == "ZIP":
-      conf.append("-D EMBREE_SIGN_FILE=/NAS/packages/apps/signfile/mac/SignFile")
+      conf.append("-D EMBREE_SIGN_FILE="+nas_macosx+"/signfile/mac/SignFile")
       conf.append("-D EMBREE_INSTALL_DEPENDENCIES=ON")
       conf.append("-D EMBREE_ZIP_MODE=ON")
       conf.append("-D CMAKE_SKIP_INSTALL_RPATH=OFF")
@@ -318,7 +343,7 @@ def runConfig(config):
       conf.append("-D CMAKE_INSTALL_DOCDIR=doc")
       conf.append("-D CMAKE_INSTALL_BINDIR=bin")
     elif OS == "macosx" and config["package"] == "PKG":
-      conf.append("-D EMBREE_SIGN_FILE=/NAS/packages/apps/signfile/mac/SignFile")
+      conf.append("-D EMBREE_SIGN_FILE="+nas_macosx+"/signfile/mac/SignFile")
       conf.append("-D EMBREE_INSTALL_DEPENDENCIES=OFF")
       conf.append("-D EMBREE_ZIP_MODE=OFF")
       conf.append("-D CMAKE_SKIP_INSTALL_RPATH=OFF")
@@ -329,7 +354,7 @@ def runConfig(config):
       conf.append("-D CMAKE_INSTALL_DOCDIR=../../Applications/Embree3/doc")
       conf.append("-D CMAKE_INSTALL_BINDIR=../../Applications/Embree3/bin")
     elif OS == "windows" and config["package"] == "ZIP":
-      conf.append("-D EMBREE_SIGN_FILE=\\\\vis-nassie.an.intel.com\\NAS\\packages\\apps\\signfile\\windows\\SignFile.exe")
+      conf.append("-D EMBREE_SIGN_FILE="+nas_windows+"\\signfile\\windows\\SignFile.exe")
       conf.append("-D EMBREE_INSTALL_DEPENDENCIES=ON")
       conf.append("-D EMBREE_ZIP_MODE=ON")
       conf.append("-D CMAKE_INSTALL_INCLUDEDIR=include")
@@ -338,7 +363,7 @@ def runConfig(config):
       conf.append("-D CMAKE_INSTALL_DOCDIR=doc")
       conf.append("-D CMAKE_INSTALL_BINDIR=bin")
     elif OS == "windows" and config["package"] == "MSI":
-      conf.append("-D EMBREE_SIGN_FILE=\\\\vis-nassie.an.intel.com\\NAS\\packages\\apps\\signfile\\windows\\SignFile.exe")
+      conf.append("-D EMBREE_SIGN_FILE="+nas_windows+"\\signfile\\windows\\SignFile.exe")
       conf.append("-D EMBREE_INSTALL_DEPENDENCIES=ON")
       conf.append("-D EMBREE_ZIP_MODE=OFF")
       conf.append("-D CMAKE_INSTALL_INCLUDEDIR=include")
@@ -350,6 +375,9 @@ def runConfig(config):
       sys.stderr.write("unknown package mode: "+OS+":"+config["package"])
       sys.exit(1)
 
+  if rtcore:
+    conf.append("-D EMBREE_CONFIG="+(",".join(rtcore)))
+       
   ctest =  "ctest -VV -S scripts/test.cmake"
   if g_cdash != "": ctest += " -D CTEST_DROP_SITE="+g_cdash
   ctest += " -D EMBREE_TESTING_INTENSITY="+str(g_intensity)
@@ -367,7 +395,7 @@ def runConfig(config):
     if OS == "windows":
       try:
         subprocess.check_call(cmd, stderr=subprocess.STDOUT, shell=True)
-      except subprocess.CalledProcessError, e:
+      except subprocess.CalledProcessError as e:
         sys.stderr.write("windows test invokation failed with return code "+str(e.returncode))
         sys.exit(1)
     else:

@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "scene.h"
 
@@ -40,16 +27,6 @@ namespace embree
   {
     device->refInc();
 
-#if defined(TASKING_INTERNAL) 
-    scheduler = nullptr;
-#elif defined(TASKING_TBB) && TASKING_TBB_USE_TASK_ISOLATION
-    group = new tbb::isolated_task_group;
-#elif defined(TASKING_TBB)
-    group = new tbb::task_group;
-#elif defined(TASKING_PPL)
-    group = new concurrency::task_group;
-#endif
-
     intersectors = Accel::Intersectors(missing_rtcCommit);
 
     /* one can overwrite flags through device for debugging */
@@ -59,11 +36,8 @@ namespace embree
       scene_flags = (RTCSceneFlags) device->scene_flags;
   }
 
-  Scene::~Scene () 
+  Scene::~Scene() noexcept
   {
-#if defined(TASKING_TBB) || defined(TASKING_PPL)
-    delete group; group = nullptr;
-#endif
     device->refDec();
   }
   
@@ -447,20 +421,20 @@ namespace embree
 #if defined (EMBREE_TARGET_SIMD8)
       if (device->canUseAVX() && !isCompactAccel())
       {
-        //if (quality_flags != RTC_BUILD_QUALITY_LOW) {
-        accels_add(device->bvh8_factory->BVH8UserGeometry(this,BVHFactory::BuildVariant::STATIC));
-        //} else {
-        //accels_add(device->bvh8_factory->BVH8UserGeometry(this,BVHFactory::BuildVariant::DYNAMIC));
-        //}
+        if (quality_flags != RTC_BUILD_QUALITY_LOW) {
+          accels_add(device->bvh8_factory->BVH8UserGeometry(this,BVHFactory::BuildVariant::STATIC));
+        } else {
+          accels_add(device->bvh8_factory->BVH8UserGeometry(this,BVHFactory::BuildVariant::DYNAMIC));
+        }
       }
       else
 #endif
       {
-        //if (quality_flags != RTC_BUILD_QUALITY_LOW) {
-        accels_add(device->bvh4_factory->BVH4UserGeometry(this,BVHFactory::BuildVariant::STATIC));
-        //} else {
-        //accels_add(device->bvh4_factory->BVH4UserGeometry(this,BVHFactory::BuildVariant::DYNAMIC)); // FIXME: only enable when memory consumption issue with instancing is solved
-        //}
+        if (quality_flags != RTC_BUILD_QUALITY_LOW) {
+          accels_add(device->bvh4_factory->BVH4UserGeometry(this,BVHFactory::BuildVariant::STATIC));
+        } else {
+          accels_add(device->bvh4_factory->BVH4UserGeometry(this,BVHFactory::BuildVariant::DYNAMIC));
+        }
       }
     }
     else if (device->object_accel == "bvh4.object") accels_add(device->bvh4_factory->BVH4UserGeometry(this));
@@ -493,16 +467,27 @@ namespace embree
   void Scene::createInstanceAccel()
   {
 #if defined(EMBREE_GEOMETRY_INSTANCE)
-    //if (device->object_accel == "default") 
+    // if (device->object_accel == "default") 
     {
 #if defined (EMBREE_TARGET_SIMD8)
-      if (device->canUseAVX() && !isCompactAccel())
-        accels_add(device->bvh8_factory->BVH8Instance(this, false, BVHFactory::BuildVariant::STATIC));
+      if (device->canUseAVX() && !isCompactAccel()) {
+        if (quality_flags != RTC_BUILD_QUALITY_LOW) {
+          accels_add(device->bvh8_factory->BVH8Instance(this, false, BVHFactory::BuildVariant::STATIC));
+        } else {
+          accels_add(device->bvh8_factory->BVH8Instance(this, false, BVHFactory::BuildVariant::DYNAMIC));
+        }
+      } 
       else
 #endif
-        accels_add(device->bvh4_factory->BVH4Instance(this, false, BVHFactory::BuildVariant::STATIC));
+      {
+        if (quality_flags != RTC_BUILD_QUALITY_LOW) {
+          accels_add(device->bvh4_factory->BVH4Instance(this, false, BVHFactory::BuildVariant::STATIC));
+        } else {
+          accels_add(device->bvh4_factory->BVH4Instance(this, false, BVHFactory::BuildVariant::DYNAMIC));
+        }
+      }
     }
-    //else throw_RTCError(RTC_ERROR_INVALID_ARGUMENT,"unknown instance accel "+device->instance_accel);
+    // else throw_RTCError(RTC_ERROR_INVALID_ARGUMENT,"unknown instance accel "+device->instance_accel);
 #endif
   }
 
@@ -525,16 +510,27 @@ namespace embree
   void Scene::createInstanceExpensiveAccel()
   {
 #if defined(EMBREE_GEOMETRY_INSTANCE)
-    //if (device->object_accel == "default") 
+    // if (device->object_accel == "default") 
     {
 #if defined (EMBREE_TARGET_SIMD8)
-      if (device->canUseAVX() && !isCompactAccel())
-        accels_add(device->bvh8_factory->BVH8Instance(this, true, BVHFactory::BuildVariant::STATIC));
+      if (device->canUseAVX() && !isCompactAccel()) {
+        if (quality_flags != RTC_BUILD_QUALITY_LOW) {
+          accels_add(device->bvh8_factory->BVH8Instance(this, true, BVHFactory::BuildVariant::STATIC));
+        } else {
+          accels_add(device->bvh8_factory->BVH8Instance(this, true, BVHFactory::BuildVariant::DYNAMIC));
+        }
+      } 
       else
 #endif
-        accels_add(device->bvh4_factory->BVH4Instance(this, true, BVHFactory::BuildVariant::STATIC));
+      {
+        if (quality_flags != RTC_BUILD_QUALITY_LOW) {
+          accels_add(device->bvh4_factory->BVH4Instance(this, true, BVHFactory::BuildVariant::STATIC));
+        } else {
+          accels_add(device->bvh4_factory->BVH4Instance(this, true, BVHFactory::BuildVariant::DYNAMIC));
+        }
+      }
     }
-    //else throw_RTCError(RTC_ERROR_INVALID_ARGUMENT,"unknown instance accel "+device->instance_accel);
+    // else throw_RTCError(RTC_ERROR_INVALID_ARGUMENT,"unknown instance accel "+device->instance_accel);
 #endif
   }
 
@@ -717,7 +713,7 @@ namespace embree
     accels_select(hasFilterFunction());
   
     /* build all hierarchies of this scene */
-	accels_build();
+    accels_build();
 
     /* make static geometry immutable */
     if (!isDynamicAccel()) {
@@ -834,12 +830,12 @@ namespace embree
 
 #if USE_TASK_ARENA
         if (join) {
-          device->arena->execute([&]{ group->wait(); });
+          device->arena->execute([&]{ group.wait(); });
         }
         else
 #endif
         {
-          group->wait();
+          group.wait();
         }
 
         pause_cpu();
@@ -866,19 +862,19 @@ namespace embree
       if (join)
       {
         device->arena->execute([&]{
-            group->run([&]{
+            group.run([&]{
                 tbb::parallel_for (size_t(0), size_t(1), size_t(1), [&] (size_t) { commit_task(); }, ctx);
               });
-            group->wait();
+            group.wait();
           });
       }
       else
 #endif
       {
-        group->run([&]{
+        group.run([&]{
             tbb::parallel_for (size_t(0), size_t(1), size_t(1), [&] (size_t) { commit_task(); }, ctx);
           });
-        group->wait();
+        group.wait();
       }
      
       /* reset MXCSR register again */
@@ -919,10 +915,10 @@ namespace embree
     
     try {
 
-      group->run([&]{
+      group.run([&]{
           concurrency::parallel_for(size_t(0), size_t(1), size_t(1), [&](size_t) { commit_task(); });
         });
-      group->wait();
+      group.wait();
 
        /* reset MXCSR register again */
       _mm_setcsr(mxcsr);

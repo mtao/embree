@@ -69,6 +69,10 @@ Possible properties to query are:
     back face culling is enabled. This is only the case if Embree is
     compiled with `EMBREE_BACKFACE_CULLING` enabled.
 
++   `RTC_DEVICE_PROPERTY_COMPACT_POLYS_ENABLED`: Queries whether
+    compact polys is enabled. This is only the case if Embree is
+    compiled with `EMBREE_COMPACT_POLYS` enabled.
+
 +   `RTC_DEVICE_PROPERTY_FILTER_FUNCTION_SUPPORTED`: Queries whether
     filter functions are supported, which is the case if Embree is
     compiled with `EMBREE_FILTER_FUNCTION` enabled.
@@ -108,7 +112,7 @@ Possible properties to query are:
     1. Intel Threading Building Blocks (TBB)
     2. Parallel Patterns Library (PPL)
 
-+   `RTC_DEVICE_PROPERTY_COMMIT_JOIN_SUPPORTED`: Queries whether
++   `RTC_DEVICE_PROPERTY_JOIN_COMMIT_SUPPORTED`: Queries whether
     `rtcJoinCommitScene` is supported. This is not the case when Embree is
     compiled with PPL or older versions of TBB.
 

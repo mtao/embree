@@ -540,6 +540,11 @@ Embree API Reference
 ```
 \pagebreak
 
+## rtcGetSceneDevice
+``` {include=src/api/rtcGetSceneDevice.md}
+```
+\pagebreak
+
 ## rtcRetainScene
 ``` {include=src/api/rtcRetainScene.md}
 ```
@@ -656,6 +661,11 @@ Embree API Reference
 ```
 \pagebreak
 
+## RTCCurveFlags
+``` {include=src/api/RTCCurveFlags.md}
+```
+\pagebreak
+
 ## rtcRetainGeometry
 ``` {include=src/api/rtcRetainGeometry.md}
 ```
@@ -718,6 +728,16 @@ Embree API Reference
 
 ## rtcSetNewGeometryBuffer
 ``` {include=src/api/rtcSetNewGeometryBuffer.md}
+```
+\pagebreak
+
+## RTCFormat
+``` {include=src/api/RTCFormat.md}
+```
+\pagebreak
+
+## RTCBufferType
+``` {include=src/api/RTCBufferType.md}
 ```
 \pagebreak
 
@@ -993,16 +1013,15 @@ Embree API Reference
 ``` {include=src/api/rtcInitPointQueryContext.md}
 ```
 \pagebreak
+
 ## rtcPointQuery
 ``` {include=src/api/rtcPointQuery.md}
 ```
-
 \pagebreak
 
 ## rtcCollide
 ``` {include=src/api/rtcCollide.md}
 ```
-
 \pagebreak
 
 ## rtcNewBVH
@@ -1178,5 +1197,7 @@ components, and a single SSE store to set up the `dir` and `time`
 components of a single ray (`RTCRay` type). Storing these values using
 scalar stores causes a store-to-load forwarding penalty because Embree
 is reading these components using SSE loads later on.
+
+\pagebreak
 
 

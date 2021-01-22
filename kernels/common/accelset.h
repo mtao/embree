@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -81,7 +68,7 @@ namespace embree
       __forceinline bool valid(size_t i, const range<size_t>& itime_range) const
       {
         for (size_t itime = itime_range.begin(); itime <= itime_range.end(); itime++)
-          if (!isvalid(bounds(i,itime))) return false;
+          if (!isvalid_non_empty(bounds(i,itime))) return false;
         
         return true;
       }
@@ -122,7 +109,7 @@ namespace embree
       {
         const BBox3fa b = bounds(i);
         if (bbox) *bbox = b;
-        return isvalid(b);
+        return isvalid_non_empty(b);
       }
 
       /*! calculates the build bounds of the i'th item at the itime'th time segment, if it's valid */
@@ -130,7 +117,7 @@ namespace embree
       {
         const LBBox3fa bounds = linearBounds(i,itime);
         bbox = bounds.bounds0; // use bounding box of first timestep to build BVH
-        return isvalid(bounds);
+        return isvalid_non_empty(bounds);
       }
 
       /*! calculates the linear bounds of the i'th primitive for the specified time range */

@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "obj_loader.h"
 #include "texture.h"
@@ -137,7 +124,7 @@ namespace embree
     std::vector<Crease> ec;
 
     std::vector<std::vector<Vertex> > curGroup;
-    std::vector<avector<Vec3fa> > curGroupHair;
+    std::vector<avector<Vec3ff> > curGroupHair;
 
     /*! Material handling. */
     std::string curMaterialName;
@@ -230,9 +217,9 @@ namespace embree
         else continue;
 
         unsigned int N = getInt(token);
-        avector<Vec3fa> hair;
+        avector<Vec3ff> hair;
         for (unsigned int i=0; i<3*N+1; i++) {
-          hair.push_back(getVec3fa(token));
+          hair.push_back((Vec3ff)getVec3fa(token));
         }
         
         for (unsigned int i=0; i<N+1; i++)
@@ -454,7 +441,7 @@ namespace embree
         if (!strncmp(token, "eta",               3)) { parseSep(token +=  3); cur.eta = getVec3f(token); }
         if (!strncmp(token, "k",                 1)) { parseSep(token +=  1); cur.k = getVec3f(token); }
       } 
-      catch (const std::runtime_error e) {
+      catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
       }
     }
@@ -607,7 +594,7 @@ namespace embree
    {
      if (curGroupHair.empty()) return;
 
-     avector<Vec3fa> vertices;
+     avector<Vec3ff> vertices;
      std::vector<SceneGraph::HairSetNode::Hair> curves;
      
      for (size_t i=0; i<curGroupHair.size(); i++) {

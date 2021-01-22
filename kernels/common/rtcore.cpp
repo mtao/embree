@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #define RTC_EXPORT_API
 
@@ -177,6 +164,17 @@ RTC_NAMESPACE_BEGIN;
     return (RTCScene) scene->refInc();
     RTC_CATCH_END((Device*)hdevice);
     return nullptr;
+  }
+
+  RTC_API RTCDevice rtcGetSceneDevice(RTCScene hscene)
+  {
+    Scene* scene = (Scene*) hscene;
+    RTC_CATCH_BEGIN;
+    RTC_TRACE(rtcGetSceneDevice);
+    RTC_VERIFY_HANDLE(hscene);
+    return (RTCDevice)scene->device->refInc(); // user will own one additional device reference
+    RTC_CATCH_END2(scene);
+    return (RTCDevice)nullptr;
   }
 
   RTC_API void rtcSetSceneProgressMonitorFunction(RTCScene hscene, RTCProgressMonitorFunction progress, void* ptr) 
@@ -1056,7 +1054,8 @@ RTC_NAMESPACE_BEGIN;
     RTC_TRACE(rtcSetGeometryTransformQuaternion);
     RTC_VERIFY_HANDLE(hgeometry);
     RTC_VERIFY_HANDLE(qd);
-    AffineSpace3fa transform;
+    
+    AffineSpace3fx transform;
     transform.l.vx.x = qd->scale_x;
     transform.l.vy.y = qd->scale_y;
     transform.l.vz.z = qd->scale_z;
@@ -1166,6 +1165,8 @@ RTC_NAMESPACE_BEGIN;
 #endif
     }
 
+    case RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE:
+    case RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE:
     case RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE:
       
     case RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE:
@@ -1192,7 +1193,8 @@ RTC_NAMESPACE_BEGIN;
       
       Geometry* geom;
       switch (type) {
-      //case RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE            : geom = createLineSegments (device,Geometry::GTY_ROUND_LINEAR_CURVE); break;
+      case RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE             : geom = createLineSegments (device,Geometry::GTY_CONE_LINEAR_CURVE); break;
+      case RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE            : geom = createLineSegments (device,Geometry::GTY_ROUND_LINEAR_CURVE); break;
       case RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE             : geom = createLineSegments (device,Geometry::GTY_FLAT_LINEAR_CURVE); break;
       //case RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_LINEAR_CURVE  : geom = createLineSegments (device,Geometry::GTY_ORIENTED_LINEAR_CURVE); break;
         
@@ -1275,7 +1277,7 @@ RTC_NAMESPACE_BEGIN;
     RTC_CATCH_END(device);
     return nullptr;
   }
-  
+
   RTC_API void rtcSetGeometryUserPrimitiveCount(RTCGeometry hgeometry, unsigned int userPrimitiveCount)
   {
     Geometry* geometry = (Geometry*) hgeometry;
@@ -1338,7 +1340,6 @@ RTC_NAMESPACE_BEGIN;
     RTC_CATCH_END2(geometry);
   }
  
-  /*! sets the build quality of the geometry */
   RTC_API void rtcSetGeometryBuildQuality (RTCGeometry hgeometry, RTCBuildQuality quality) 
   {
     Geometry* geometry = (Geometry*) hgeometry;
@@ -1351,6 +1352,21 @@ RTC_NAMESPACE_BEGIN;
         quality != RTC_BUILD_QUALITY_REFIT)
       throw std::runtime_error("invalid build quality");
     geometry->setBuildQuality(quality);
+    RTC_CATCH_END2(geometry);
+  }
+
+  RTC_API void rtcSetGeometryMaxRadiusScale(RTCGeometry hgeometry, float maxRadiusScale)
+  {
+    Geometry* geometry = (Geometry*) hgeometry;
+    RTC_CATCH_BEGIN;
+    RTC_TRACE(rtcSetGeometryMaxRadiusScale);
+    RTC_VERIFY_HANDLE(hgeometry);
+#if RTC_MIN_WIDTH
+    if (maxRadiusScale < 1.0f) throw_RTCError(RTC_ERROR_INVALID_OPERATION,"maximal radius scale has to be larger or equal to 1");
+    geometry->setMaxRadiusScale(maxRadiusScale);
+#else
+    throw_RTCError(RTC_ERROR_INVALID_OPERATION,"min-width feature is not enabled");
+#endif
     RTC_CATCH_END2(geometry);
   }
   

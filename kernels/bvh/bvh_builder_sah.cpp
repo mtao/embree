@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "bvh.h"
 #include "bvh_builder.h"
@@ -159,7 +146,7 @@ namespace embree
               bvh->alloc.setOSallocation(true);
 
             /* initialize allocator */
-            const size_t node_bytes = numPrimitives*sizeof(typename BVH::AlignedNodeMB)/(4*N);
+            const size_t node_bytes = numPrimitives*sizeof(typename BVH::AABBNodeMB)/(4*N);
             const size_t leaf_bytes = size_t(1.2*Primitive::blocks(numPrimitives)*sizeof(Primitive));
             bvh->alloc.init_estimate(node_bytes+leaf_bytes);
             settings.singleThreadThreshold = bvh->alloc.fixSingleThreadThreshold(N,DEFAULT_SINGLE_THREAD_THRESHOLD,numPrimitives,node_bytes+leaf_bytes);
@@ -192,7 +179,6 @@ namespace embree
 
         /* for static geometries we can do some cleanups */
         else if (scene && scene->isStaticAccel()) {
-          bvh->shrink();
           prims.clear();
         }
 	bvh->cleanup();
@@ -278,7 +264,6 @@ namespace embree
 	/* clear temporary data for static geometry */
 	if (scene && scene->isStaticAccel()) {
           prims.clear();
-          bvh->shrink();
         }
 	bvh->cleanup();
         bvh->postBuild(t0);
@@ -340,13 +325,14 @@ namespace embree
           {
             if (unlikely(prims[start+i].geomID() != geomIDs[g])) continue;
 
-            const SubGridBuildData  &sgrid_bd = sgrids[prims[start+i].primID()];                      
+            const SubGridBuildData& sgrid_bd = sgrids[prims[start+i].primID()];
             x[pos] = sgrid_bd.sx;
             y[pos] = sgrid_bd.sy;
             primID[pos] = sgrid_bd.primID;
             bounds[pos] = prims[start+i].bounds();
             pos++;
           }
+          assert(pos <= N);
           new (&accel[g]) SubGridQBVHN<N>(x,y,primID,bounds,geomIDs[g],pos);
         }
 
@@ -515,7 +501,7 @@ namespace embree
           bvh->alloc.setOSallocation(true);
 
         /* initialize allocator */
-        const size_t node_bytes = numPrimitives*sizeof(typename BVH::AlignedNodeMB)/(4*N);
+        const size_t node_bytes = numPrimitives*sizeof(typename BVH::AABBNodeMB)/(4*N);
         const size_t leaf_bytes = size_t(1.2*(float)numPrimitives/N * sizeof(SubGridQBVHN<N>));
 
         bvh->alloc.init_estimate(node_bytes+leaf_bytes);
@@ -544,7 +530,6 @@ namespace embree
 
         /* for static geometries we can do some cleanups */
         else if (scene && scene->isStaticAccel()) {
-          bvh->shrink();
           prims.clear();
         }
 	bvh->cleanup();
@@ -631,8 +616,14 @@ namespace embree
 
 #if defined(EMBREE_GEOMETRY_INSTANCE)
     Builder* BVH4InstanceSceneBuilderSAH (void* bvh, Scene* scene, Geometry::GTypeMask gtype) { return new BVHNBuilderSAH<4,InstancePrimitive>((BVH4*)bvh,scene,4,1.0f,1,1,gtype); }
+    Builder* BVH4InstanceMeshBuilderSAH (void* bvh, Instance* mesh, Geometry::GTypeMask gtype, unsigned int geomID, size_t mode) {
+      return new BVHNBuilderSAH<4,InstancePrimitive>((BVH4*)bvh,mesh,geomID,4,1.0f,1,inf,gtype);
+    }
 #if defined(__AVX__)
     Builder* BVH8InstanceSceneBuilderSAH (void* bvh, Scene* scene, Geometry::GTypeMask gtype) { return new BVHNBuilderSAH<8,InstancePrimitive>((BVH8*)bvh,scene,8,1.0f,1,1,gtype); }
+    Builder* BVH8InstanceMeshBuilderSAH (void* bvh, Instance* mesh, Geometry::GTypeMask gtype, unsigned int geomID, size_t mode) {
+      return new BVHNBuilderSAH<8,InstancePrimitive>((BVH8*)bvh,mesh,geomID,8,1.0f,1,inf,gtype);
+    }
 #endif
 #endif
 

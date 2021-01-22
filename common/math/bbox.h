@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -38,7 +25,8 @@ namespace embree
     ////////////////////////////////////////////////////////////////////////////////
 
     __forceinline BBox           ( )                   { }
-    __forceinline BBox           ( const BBox& other ) { lower = other.lower; upper = other.upper; }
+    template<typename T1>
+    __forceinline BBox           ( const BBox<T1>& other ) : lower(other.lower), upper(other.upper) {}
     __forceinline BBox& operator=( const BBox& other ) { lower = other.lower; upper = other.upper; return *this; }
 
     __forceinline BBox ( const T& v                     ) : lower(v), upper(v) {}
@@ -93,6 +81,9 @@ namespace embree
   template<> __forceinline bool BBox<Vec3fa>::empty() const {
     return !all(le_mask(lower,upper));
   }
+  template<> __forceinline bool BBox<Vec3fx>::empty() const {
+    return !all(le_mask(lower,upper));
+  }
 #endif
 
   /*! tests if box is finite */
@@ -100,6 +91,11 @@ namespace embree
     return all(gt_mask(v.lower,Vec3fa_t(-FLT_LARGE)) & lt_mask(v.upper,Vec3fa_t(+FLT_LARGE)));
   }
 
+  /*! tests if box is finite and non-empty*/
+  __forceinline bool isvalid_non_empty( const BBox<Vec3fa>& v ) {
+    return all(gt_mask(v.lower,Vec3fa_t(-FLT_LARGE)) & lt_mask(v.upper,Vec3fa_t(+FLT_LARGE)) & le_mask(v.lower,v.upper));
+  }
+  
   /*! tests if box has finite entries */
   __forceinline bool is_finite( const BBox<Vec3fa>& b) {
     return is_finite(b.lower) && is_finite(b.upper);
@@ -127,6 +123,9 @@ namespace embree
 
   __forceinline float halfArea( const BBox<Vec3fa>& b ) { return halfArea(b.size()); }
   __forceinline float     area( const BBox<Vec3fa>& b ) { return 2.0f*halfArea(b); }
+
+  __forceinline float halfArea( const BBox<Vec3fx>& b ) { return halfArea(b.size()); }
+  __forceinline float     area( const BBox<Vec3fx>& b ) { return 2.0f*halfArea(b); }
 
   template<typename Vec> __forceinline float safeArea( const BBox<Vec>& b ) { if (b.empty()) return 0.0f; else return area(b); }
 
@@ -199,6 +198,10 @@ namespace embree
   template<> __inline bool subset( const BBox<Vec3fa>& a, const BBox<Vec3fa>& b ) {
     return all(ge_mask(a.lower,b.lower)) & all(le_mask(a.upper,b.upper));
   }
+
+  template<> __inline bool subset( const BBox<Vec3fx>& a, const BBox<Vec3fx>& b ) {
+    return all(ge_mask(a.lower,b.lower)) & all(le_mask(a.upper,b.upper));
+  }
   
   /*! blending */
   template<typename T>
@@ -207,7 +210,7 @@ namespace embree
   }
 
   /*! output operator */
-  template<typename T> __forceinline std::ostream& operator<<(std::ostream& cout, const BBox<T>& box) {
+  template<typename T> __forceinline embree_ostream operator<<(embree_ostream cout, const BBox<T>& box) {
     return cout << "[" << box.lower << "; " << box.upper << "]";
   }
 
@@ -217,6 +220,8 @@ namespace embree
   typedef BBox<Vec2fa> BBox2fa;
   typedef BBox<Vec3f> BBox3f;
   typedef BBox<Vec3fa> BBox3fa;
+  typedef BBox<Vec3fx> BBox3fx;
+  typedef BBox<Vec3ff> BBox3ff;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "../common/tutorial/tutorial_device.h"
 #include "../common/math/random_sampler.h"
@@ -21,7 +8,7 @@
 namespace embree {
 
 /* accumulation buffer */
-Vec3fa* g_accu = nullptr;
+Vec3ff* g_accu = nullptr;
 unsigned int g_accu_width = 0;
 unsigned int g_accu_height = 0;
 unsigned int g_accu_count = 0;
@@ -72,8 +59,8 @@ void updateTransformation()
   {
     // scale/skew, rotation, transformation data for quaternion motion blur
     float K = g_numTimeSteps > 0 ? ((float)i)/(g_numTimeSteps-1) : 0.f;
-    float R = K * 2.0 * float(pi);
-    if (g_numTimeSteps == 3) R = K * (2.0 - 1e-6f) * float(pi);
+    float R = K * 2.0 * float(M_PI);
+    if (g_numTimeSteps == 3) R = K * (2.0 - 1e-6f) * float(M_PI);
 
     Quaternion3f q = Quaternion3f::rotate(Vec3fa(0.f, 1.f, 0.f), R);
     rtcInitQuaternionDecomposition(qdc+i);
@@ -94,8 +81,8 @@ void updateTransformation()
   {
     // scale/skew, rotation, transformation data for quaternion motion blur
     float K = g_numTimeSteps > 0 ? ((float)i)/(g_numTimeSteps-1) : 0.f;
-    float R = K * 2.0 * float(pi);
-    if (g_numTimeSteps == 3) R = K * (2.0 - 1e-6f) * float(pi);
+    float R = K * 2.0 * float(M_PI);
+    if (g_numTimeSteps == 3) R = K * (2.0 - 1e-6f) * float(M_PI);
 
     Quaternion3f q = Quaternion3f::rotate(Vec3fa(0.f, 1.f, 0.f), R);
     rtcInitQuaternionDecomposition(qdc+i);
@@ -299,10 +286,6 @@ extern "C" void device_init (char* cfg)
   rtcCommitGeometry(g_instance_quaternion_1);
 
   rtcCommitScene (g_scene);
-
-  /* set start render mode */
-  renderTile = renderTileStandard;
-  key_pressed_handler = device_key_pressed_default;
 }
 
 inline Vec3fa face_forward(const Vec3fa& dir, const Vec3fa& _Ng) {
@@ -336,8 +319,8 @@ Vec3fa renderPixelFunction(float x, float y, RandomSampler& sampler, const ISPCC
 
     // shade sphere
     Vec3fa Ng = normalize(ray.Ng);
-    float u = (atan2(Ng.z, Ng.x) + float(pi)) / (2.f * float(pi));
-    float v = acos(Ng.y) / float(pi);
+    float u = (atan2(Ng.z, Ng.x) + float(M_PI)) / (2.f * float(M_PI));
+    float v = acos(Ng.y) / float(M_PI);
     u = 16*u+0.5f;
     v = 19*v+0.5f;
     color = ((u-(int)u) < 0.9 && (v-(int)v) < 0.9) ? Vec3fa(0.5f) : Vec3fa(0.2f);
@@ -391,7 +374,7 @@ void renderTileStandard(int taskIndex,
     Vec3fa color = renderPixelStandard((float)x,(float)y,camera,g_stats[threadIndex]);
 
     /* write color to framebuffer */
-    Vec3fa accu_color = g_accu[y*width+x] + Vec3fa(color.x,color.y,color.z,1.0f); g_accu[y*width+x] = accu_color;
+    Vec3ff accu_color = g_accu[y*width+x] + Vec3ff(color.x,color.y,color.z,1.0f); g_accu[y*width+x] = accu_color;
     float f = rcp(max(1.f,accu_color.w));
     unsigned int r = (unsigned int) (255.0f * clamp(accu_color.x*f,0.0f,1.0f));
     unsigned int g = (unsigned int) (255.0f * clamp(accu_color.y*f,0.0f,1.0f));
@@ -409,8 +392,24 @@ void renderTileTask (int taskIndex, int threadIndex, int* pixels,
                          const int numTilesX,
                          const int numTilesY)
 {
-  renderTile(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  renderTileStandard(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
 }
+
+extern "C" void renderFrameStandard (int* pixels,
+                          const unsigned int width,
+                          const unsigned int height,
+                          const float time,
+                          const ISPCCamera& camera)
+{
+  const int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
+  const int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
+  parallel_for(size_t(0),size_t(numTilesX*numTilesY),[&](const range<size_t>& range) {
+    const int threadIndex = (int)TaskScheduler::threadIndex();
+    for (size_t i=range.begin(); i<range.end(); i++)
+      renderTileTask((int)i,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  }); 
+}
+
 
 /* called by the C++ code to render */
 extern "C" void device_render (int* pixels,
@@ -427,11 +426,11 @@ extern "C" void device_render (int* pixels,
 
   if (g_accu_width != width || g_accu_height != height) {
     alignedFree(g_accu);
-    g_accu = (Vec3fa*) alignedMalloc(width*height*sizeof(Vec3fa),16);
+    g_accu = (Vec3ff*) alignedMalloc(width*height*sizeof(Vec3ff),16);
     g_accu_width = width;
     g_accu_height = height;
     for (unsigned int i=0; i<width*height; i++)
-      g_accu[i] = Vec3fa(0.0f);
+      g_accu[i] = Vec3ff(0.0f);
   }
 
   if (g_changed || g_reset)
@@ -450,19 +449,11 @@ extern "C" void device_render (int* pixels,
   if (camera_changed) {
     g_accu_count=0;
     for (unsigned int i=0; i<width*height; i++)
-      g_accu[i] = Vec3fa(0.0f);
+      g_accu[i] = Vec3ff(0.0f);
   }
   else {
     g_accu_count++;
   }
-
-  const int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
-  const int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
-  parallel_for(size_t(0),size_t(numTilesX*numTilesY),[&](const range<size_t>& range) {
-    const int threadIndex = (int)TaskScheduler::threadIndex();
-    for (size_t i=range.begin(); i<range.end(); i++)
-      renderTileTask((int)i,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
-  }); 
 }
 
 /* called by the C++ code for cleanup */

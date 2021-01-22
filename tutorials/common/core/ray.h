@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -58,9 +45,9 @@
     __forceinline operator bool() const { return geomID != RTC_INVALID_GEOMETRY_ID; }
 
   public:
-    embree::Vec3fa org;       //!< Ray origin + tnear
+    embree::Vec3ff org;       //!< Ray origin + tnear
     //float tnear;              //!< Start of ray segment
-    embree::Vec3fa dir;        //!< Ray direction + tfar
+    embree::Vec3ff dir;        //!< Ray direction + tfar
     //float time;               //!< Time of this ray for motion blur.
     float tfar;               //!< End of ray segment
     unsigned int mask;        //!< used to mask out objects during traversal
@@ -121,7 +108,7 @@ __forceinline RTCRay* RTCRay1_(Ray& ray) {
 }
 
   /*! Outputs ray to stream. */ 
-  inline std::ostream& operator<<(std::ostream& cout, const Ray& ray) {
+  __forceinline embree_ostream operator<<(embree_ostream cout, const Ray& ray) {
     return cout << "{ " << 
       "org = " << ray.org << ", dir = " << ray.dir << ", near = " << ray.tnear() << ", far = " << ray.tfar << ", time = " << ray.time() << ", " <<
       //"instID = " << ray.instID 

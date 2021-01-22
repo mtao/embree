@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -137,6 +124,7 @@ namespace embree
       GTY_FLAT_LINEAR_CURVE = 0,
       GTY_ROUND_LINEAR_CURVE = 1,
       GTY_ORIENTED_LINEAR_CURVE = 2,
+      GTY_CONE_LINEAR_CURVE = 3,
       
       GTY_FLAT_BEZIER_CURVE = 4,
       GTY_ROUND_BEZIER_CURVE = 5,
@@ -192,6 +180,7 @@ namespace embree
     {
       MTY_FLAT_LINEAR_CURVE = 1ul << GTY_FLAT_LINEAR_CURVE,
       MTY_ROUND_LINEAR_CURVE = 1ul << GTY_ROUND_LINEAR_CURVE,
+      MTY_CONE_LINEAR_CURVE = 1ul << GTY_CONE_LINEAR_CURVE,
       MTY_ORIENTED_LINEAR_CURVE = 1ul << GTY_ORIENTED_LINEAR_CURVE,
       
       MTY_FLAT_BEZIER_CURVE = 1ul << GTY_FLAT_BEZIER_CURVE,
@@ -210,7 +199,7 @@ namespace embree
       MTY_ROUND_CATMULL_ROM_CURVE = 1ul << GTY_ROUND_CATMULL_ROM_CURVE,
       MTY_ORIENTED_CATMULL_ROM_CURVE = 1ul << GTY_ORIENTED_CATMULL_ROM_CURVE,
 
-      MTY_CURVE2 = MTY_FLAT_LINEAR_CURVE | MTY_ROUND_LINEAR_CURVE | MTY_ORIENTED_LINEAR_CURVE,
+      MTY_CURVE2 = MTY_FLAT_LINEAR_CURVE | MTY_ROUND_LINEAR_CURVE | MTY_CONE_LINEAR_CURVE | MTY_ORIENTED_LINEAR_CURVE,
       
       MTY_CURVE4 = MTY_FLAT_BEZIER_CURVE | MTY_ROUND_BEZIER_CURVE | MTY_ORIENTED_BEZIER_CURVE |
                    MTY_FLAT_BSPLINE_CURVE | MTY_ROUND_BSPLINE_CURVE | MTY_ORIENTED_BSPLINE_CURVE |
@@ -364,6 +353,11 @@ namespace embree
       throw_RTCError(RTC_ERROR_INVALID_OPERATION,"operation not supported for this geometry"); 
     }
 
+    /*! Sets the maximal curve radius scale allowed by min-width feature. */
+    virtual void setMaxRadiusScale(float s) {
+      throw_RTCError(RTC_ERROR_INVALID_OPERATION,"operation not supported for this geometry"); 
+    }
+
     /*! Set user data pointer. */
     virtual void setUserData(void* ptr);
       
@@ -467,7 +461,7 @@ namespace embree
     }
 
     /*! Sets transformation of the instance */
-    virtual void setQuaternionDecomposition(const AffineSpace3fa& qd, unsigned int timeStep) {
+    virtual void setQuaternionDecomposition(const AffineSpace3ff& qd, unsigned int timeStep) {
       throw_RTCError(RTC_ERROR_INVALID_OPERATION,"operation not supported for this geometry"); 
     }
 

@@ -1,4 +1,4 @@
-% Embree: High Performance Ray Tracing Kernels 3.8.0
+% Embree: High Performance Ray Tracing Kernels 3.12.1
 % Intel Corporation
 
 Embree Overview
@@ -73,11 +73,6 @@ To receive notifications of updates and new features of Embree please
 subscribe to the [Embree mailing
 list](https://groups.google.com/d/forum/embree/).
 
-Acknowledgements
-----------------
-
-This software is based in part on the work of the Independent JPEG Group.
-
 Installation of Embree
 ======================
 
@@ -85,9 +80,9 @@ Windows MSI Installer
 ---------------------
 
 You can install the Embree library using the Windows MSI installer
-[embree-3.8.0-x64.vc12.msi](https://github.com/embree/embree/releases/download/v3.8.0/embree-3.8.0.x64.vc12.msi). This
+[embree-3.12.1-x64.vc14.msi](https://github.com/embree/embree/releases/download/v3.12.1/embree-3.12.1.x64.vc14.msi). This
 will install the 64-bit Embree version by default in `Program
-Files\Intel\Embree v3.8.0 x64`.
+Files\Intel\Embree3`.
 
 You have to set the path to the `bin` folders manually to your `PATH`
 environment variable for applications to find Embree.
@@ -95,101 +90,38 @@ environment variable for applications to find Embree.
 To compile applications with Embree using CMake, please have a look at
 the `find_embree` tutorial. To compile this tutorial, you need to set
 the `embree_DIR` CMake variable of this tutorial to `Program
-Files\Intel\Embree v3.8.0 x64`.
+Files\Intel\Embree3`.
 
 To uninstall Embree, open `Programs and Features` by clicking the
 `Start button`, clicking `Control Panel`, clicking `Programs`, and
 then clicking `Programs and Features`. Select `Embree
-3.8.0 x64` and uninstall it.
+3.12.1 x64` and uninstall it.
 
 Windows ZIP File
 -----------------
 
-Embree linked against Visual Studio 2013
-[embree-3.8.0.x64.vc12.windows.zip](https://github.com/embree/embree/releases/download/v3.8.0/embree-3.8.0.x64.vc12.windows.zip)
-and Visual Studio 2015
-[embree-3.8.0.x64.vc14.windows.zip](https://github.com/embree/embree/releases/download/v3.8.0/embree-3.8.0.x64.vc14.windows.zip)
-are provided as a ZIP file. After unpacking this ZIP file, you should
-set the path to the `lib` folder manually to your `PATH` environment
-variable for applications to find Embree. To compile applications with
-Embree, you also have to set the `Include Directories` path in Visual
-Studio to the `include` folder of the Embree installation.
+Embree linked against Visual Studio 2015 are provided as a ZIP file
+[embree-3.12.1.x64.vc14.windows.zip](https://github.com/embree/embree/releases/download/v3.12.1/embree-3.12.1.x64.vc14.windows.zip). After
+unpacking this ZIP file, you should set the path to the `lib` folder
+manually to your `PATH` environment variable for applications to find
+Embree. To compile applications with Embree, you also have to set the
+`Include Directories` path in Visual Studio to the `include` folder of
+the Embree installation.
 
 If you plan to ship Embree with your application, best use the Embree
 version from this ZIP file.
-
-Linux RPMs
-----------
-
-Uncompress the `tar.gz` file
-[embree-3.8.0.x86_64.rpm.tar.gz](https://github.com/embree/embree/releases/download/v3.8.0/embree-3.8.0.x86_64.rpm.tar.gz)
-to obtain the individual RPM files:
-
-    tar xzf embree-3.8.0.x86_64.rpm.tar.gz
-
-To install Embree using the RPM packages on your Linux system, type
-the following:
-
-    sudo rpm --install embree3-lib-3.8.0-1.x86_64.rpm
-    sudo rpm --install embree3-devel-3.8.0-1.noarch.rpm
-    sudo rpm --install embree3-examples-3.8.0-1.x86_64.rpm
-
-You also have to install the Intel® Threading Building Blocks (TBB)
-using `yum`:
-
-    sudo yum install tbb.x86_64 tbb-devel.x86_64
-
-On Debian-based Linux distributions you first need to convert the RPM
-filed into DEB files using the `alien` tool:
-
-    sudo apt-get install alien dpkg-dev debhelper build-essential
-
-    sudo alien embree3-lib-3.8.0-1.x86_64.rpm
-    sudo alien embree3-devel-3.8.0-1.noarch.rpm
-    sudo alien embree3-examples-3.8.0-1.x86_64.rpm
-
-    sudo dpkg -i embree3-lib_3.8.0-2_amd64.deb
-    sudo dpkg -i embree3-devel_3.8.0-2_all.deb
-    sudo dpkg -i embree3-examples_3.8.0-2_amd64.deb
-
-Also install the Intel® Threading Building Blocks (TBB) using `apt-get`:
-
-    sudo apt-get install libtbb-dev
-
-Alternatively you can download the latest TBB version from
-[https://www.threadingbuildingblocks.org/download](https://www.threadingbuildingblocks.org/download)
-and set the `LD_LIBRARY_PATH` environment variable to point
-to the TBB library.
-
-Note that the Embree RPMs are linked against the TBB version coming
-with CentOS. This older TBB version is missing some features required
-to get optimal build performance, and does not support building of
-scenes lazily during rendering. To get a full featured Embree, please
-install using the `tar.gz` files, which always ship with the latest TBB
-version.
-
-Under Linux, Embree is installed by default in the `/usr/lib64` and
-`/usr/include` directories. This way applications will find Embree
-automatically. The Embree tutorials are installed into the
-`/usr/bin/embree3` folder. Specify the full path to
-the tutorials to start them.
-
-To uninstall Embree, just execute the following:
-
-    sudo rpm --erase embree3-lib-3.8.0-1.x86_64
-    sudo rpm --erase embree3-devel-3.8.0-1.noarch
-    sudo rpm --erase embree3-examples-3.8.0-1.x86_64
 
 Linux tar.gz Files
 ------------------
 
 The Linux version of Embree is also delivered as a `tar.gz` file:
-[embree-3.8.0.x86_64.linux.tar.gz](https://github.com/embree/embree/releases/download/v3.8.0/embree-3.8.0.x86_64.linux.tar.gz). Unpack this file using `tar` and source the provided `embree-vars.sh` (if you
-are using the bash shell) or `embree-vars.csh` (if you are using the
-C shell) to set up the environment properly:
+[embree-3.12.1.x86_64.linux.tar.gz](https://github.com/embree/embree/releases/download/v3.12.1/embree-3.12.1.x86_64.linux.tar.gz). Unpack
+this file using `tar` and source the provided `embree-vars.sh` (if you
+are using the bash shell) or `embree-vars.csh` (if you are using the C
+shell) to set up the environment properly:
 
-    tar xzf embree-3.8.0.x86_64.linux.tar.gz
-    source embree-3.8.0.x86_64.linux/embree-vars.sh
+    tar xzf embree-3.12.1.x86_64.linux.tar.gz
+    source embree-3.12.1.x86_64.linux/embree-vars.sh
 
 If you want to ship Embree with your application, best use the Embree
 version provided in the `tar.gz` file.
@@ -202,7 +134,7 @@ macOS PKG Installer
 
 To install the Embree library on your macOS system use the
 provided package installer inside
-[embree-3.8.0.x86_64.pkg](https://github.com/embree/embree/releases/download/v3.8.0/embree-3.8.0.x86_64.pkg). This
+[embree-3.12.1.x86_64.pkg](https://github.com/embree/embree/releases/download/v3.12.1/embree-3.12.1.x86_64.pkg). This
 will install Embree by default into `/opt/local/lib` and
 `/opt/local/include` directories. The Embree tutorials are installed
 into the `/Applications/Embree3` directory.
@@ -220,19 +152,20 @@ to the TBB library.
 To uninstall Embree, execute the uninstaller script
 `/Applications/Embree3/uninstall.command`.
 
-macOS tar.gz file
+macOS ZIP file
 -----------------
 
-The macOS version of Embree is also delivered as a `tar.gz` file:
-[embree-3.8.0.x86_64.macosx.tar.gz](https://github.com/embree/embree/releases/download/v3.8.0/embree-3.8.0.x86_64.macosx.tar.gz). Unpack this file using `tar` and source the provided `embree-vars.sh` (if you
-are using the bash shell) or `embree-vars.csh` (if you are using the
-C shell) to set up the environment properly:
+The macOS version of Embree is also delivered as a ZIP file:
+[embree-3.12.1.x86_64.macosx.zip](https://github.com/embree/embree/releases/download/v3.12.1/embree-3.12.1.x86_64.macosx.zip). Unpack
+this file using `tar` and source the provided `embree-vars.sh` (if you
+are using the bash shell) or `embree-vars.csh` (if you are using the C
+shell) to set up the environment properly:
 
-    tar xzf embree-3.8.0.x64.macosx.tar.gz
-    source embree-3.8.0.x64.macosx/embree-vars.sh
+    unzip embree-3.12.1.x64.macosx.zip
+    source embree-3.12.1.x64.macosx/embree-vars.sh
 
 If you want to ship Embree with your application, please use the Embree
-library of the provided `tar.gz` file. The library name of that Embree
+library of the provided ZIP file. The library name of that Embree
 library is of the form `@rpath/libembree.3.dylib`
 (and similar also for the included TBB library). This ensures that you
 can add a relative `RPATH` to your application that points to the location
@@ -247,13 +180,29 @@ optimizations; these might break Embree.
 Linux and macOS
 ---------------
 
-To compile Embree you need a modern C++ compiler that supports C++11.
-Embree is tested with Intel® Compiler 17.0 (Update 1), Intel®
-Compiler 16.0 (Update 1), Clang 3.8.0 (supports AVX2), Clang 4.0.0
-(supports AVX512) and GCC 5.4.0 (Linux only). If the GCC that comes with your
-Fedora/Red Hat/CentOS distribution is too old then you can run the
-provided script `scripts/install_linux_gcc.sh` to locally install a
-recent GCC into `$HOME/devtools-2`.
+To compile Embree you need a modern C++ compiler that supports
+C++11. Embree is tested with the following compilers:
+
+Linux
+
+  - Intel® Compiler 2020 Update 1
+  - Intel® Compiler 2019 Update 4
+  - Intel® Compiler 2017 Update 1
+  - Intel® Compiler 2016 Update 3
+  - Intel® Compiler 2015 Update 3
+  - Clang 5.0.0
+  - Clang 4.0.0
+  - GCC 10.0.1 (Fedora 32) AVX512 support
+  - GCC  8.3.1 (Fedora 28) AVX512 support
+  - GCC  7.3.1 (Fedora 27) AVX2 support
+  - GCC  7.3.1 (Fedora 26) AVX2 support
+  - GCC  6.4.1 (Fedora 25) AVX2 support
+
+macOS
+
+  - Intel® Compiler 2020 Update 1
+  - Intel® Compiler 2019 Update 4
+  - Apple LLVM 10.0.1 (macOS 10.14.6)
 
 Embree supports using the Intel® Threading Building Blocks (TBB) as the
 tasking system. For performance and flexibility reasons we recommend
@@ -271,7 +220,7 @@ installation, put the path to `ispc` permanently into your `PATH`
 environment variable or you need to correctly set the
 `ISPC_EXECUTABLE` variable during CMake configuration.
 
-You additionally have to install CMake 2.8.11 or higher and the developer
+You additionally have to install CMake 3.1.0 or higher and the developer
 version of GLUT.
 
 Under macOS, all these dependencies can be installed
@@ -347,14 +296,16 @@ your `LD_LIBRARY_PATH`.
 Windows
 -------
 
-Embree is tested under Windows using the Visual Studio 2017, Visual
-Studio 2015 (Update 1) compiler (Win32 and x64), Visual Studio 2013
-(Update 5) compiler (Win32 and x64), Intel® Compiler 17.0 (Update 1)
-(Win32 and x64), Intel® Compiler 16.0 (Update 1) (Win32 and x64), and
-Clang 3.9 (Win32 and x64). Using the Visual Studio 2015 compiler,
-Visual Studio 2013 compiler, Intel® Compiler, and Clang you can
-compile Embree for AVX2. To compile Embree for AVX-512 you have to use
-the Intel® Compiler.
+Embree is tested using the following compilers under Windows:
+
+  - Visual Studio 2019
+  - Visual Studio 2017
+  - Visual Studio 2015 (Update 1)
+  - Intel® Compiler 2019 Update 6
+  - Intel® Compiler 2017 Update 8
+  - LLVM Clang 9.0.0
+
+To compile Embree for AVX-512 you have to use the Intel® Compiler.
 
 Embree supports using the Intel® Threading Building Blocks (TBB) as the
 tasking system. For performance and flexibility reasons we recommend
@@ -372,17 +323,21 @@ found when executing your Embree applications, e.g. by putting the path
 to these libraries into your `PATH` environment variable.
 
 Embree supports the Intel® SPMD Program Compiler (ISPC), which allows
-straightforward parallelization of an entire renderer. When
-installing ISPC, make sure to download an ISPC version from
+straightforward parallelization of an entire renderer. When installing
+ISPC, make sure to download an ISPC version from
 [ispc.github.io](https://ispc.github.io/downloads.html) that is
-compatible with your Visual Studio version. There are two ISPC
-versions, one for Visual Studio 2013 and earlier, and one for Visual
-Studio 2015 and later. When using the wrong ISPC version you will get
-link errors. After installation, put the path to `ispc.exe`
-permanently into your `PATH` environment variable or you need to
-correctly set the `ISPC_EXECUTABLE` variable during CMake
-configuration. We have tested ISPC version 1.9.1. If you do not want
-to use ISPC then you can disable `EMBREE_ISPC_SUPPORT` in CMake.
+compatible with your Visual Studio version. After installation, put
+the path to `ispc.exe` permanently into your `PATH` environment
+variable or you need to correctly set the `ISPC_EXECUTABLE` variable
+during CMake configuration. If you do not want to use ISPC then you
+can disable `EMBREE_ISPC_SUPPORT` in CMake.
+
+We have tested Embree with the following ISPC versions:
+
+  - ISPC 1.14.1
+  - ISPC 1.13.0
+  - ISPC 1.12.0
+  - ISPC 1.9.2
 
 You additionally have to install [CMake](http://www.cmake.org/download/)
 (version 2.8.11 or higher). Note that you need a native Windows CMake
@@ -399,7 +354,7 @@ for a 64-bit build.
 To use a different compiler than the Microsoft Visual C++ compiler, you
 additionally need to specify the proper compiler toolset through the
 option "Optional toolset to use (-T parameter)". E.g. to use Clang for
-compilation set the toolset to "LLVM-vs2013", to use the Intel®
+compilation set the toolset to "LLVM_v142", to use the Intel®
 Compiler 2017 for compilation set the toolset to "Intel C++
 Compiler 17.0".
 
@@ -493,6 +448,9 @@ parameters that can be configured in CMake:
   surfaces facing a ray can be hit. This option is turned OFF by
   default.
 
++ `EMBREE_COMPACT_POLYS`: Enables compact tris/quads, i.e. only
+  geomIDs and primIDs are stored inside the leaf nodes.  
+
 + `EMBREE_FILTER_FUNCTION`: Enables the intersection filter function
   feature (ON by default).
 
@@ -579,6 +537,10 @@ parameters that can be configured in CMake:
   the ray origin are ignored. A value of 0.0f disables self
   intersection avoidance while 2.0f is the default value.
 
++ `EMBREE_MIN_WIDTH`: Enabled the min-width feature, which allows
+  increasing the radius of curves and points to match some amount of
+  pixels. See [rtcSetGeometryMaxRadiusScale] for more details.
+
 + `EMBREE_MAX_INSTANCE_LEVEL_COUNT`: Specifies the maximum number of nested
   instance levels. Should be greater than 0; the default value is 1.
   Instances nested any deeper than this value will silently disappear in
@@ -601,19 +563,14 @@ the folder you extracted Embree to. If you used the Windows MSI
 installer, you need to set `embree_DIR` to point to the Embree install
 location (e.g. `C:\Program Files\Intel\Embree3`).
 
-The `FIND_PACKAGE` CMake function will set the `EMBREE_INCLUDE_DIRS`
-variable to point to the directory containing the Embree headers. You
-should add this folder to the include directories of your build:
+The `FIND_PACKAGE` function will create an embree target that
+you can add to your target link libraries:
 
-    INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS})
-
-Further, the `EMBREE_LIBRARY` variable will point to the Embree
-library to link against. Link against Embree the following way:
-
-    TARGET_LINK_LIBRARIES(application ${EMBREE_LIBRARY})
+    TARGET_LINK_LIBRARIES(application embree)
 
 Now please have a look at the [Embree Tutorials] source code and the
 [Embree API] section to get started.
+
 
 
 Embree API
@@ -798,8 +755,8 @@ called which allows queries such as finding the closest point on the
 surface geometries of the scene (see Tutorial [Closest Point]) or
 nearest neighbour queries (see Tutorial [Voronoi]).
 
-See Section [rtcPointQuery] for a detailed description of how to set
-up point queries.
+See Section [rtcPointQuery](#rtcpointquery) for a detailed description
+of how to set up point queries.
 
 Collision Detection
 -------------------
@@ -1215,18 +1172,20 @@ The following configuration is supported:
 
 -   `frequency_level=[simd128,simd256,simd512]`: Specifies the
     frequency level the application want to run on, which can be
-    either: a) simd128 for apps that do not use AVX instructions, b)
-    simd256 for apps that use heavy AVX instruction, c) simd512 for
-    apps that use heavy AVX-512 instructions. When some frequency level
-    is specified, Embree will avoid doing optimizations that may reduce
-    the frequency level below the level specified. E.g. if your app
-    does not use AVX instructions setting "frequency\_level=simd128"
-    will cause some CPUs to run at highest frequency, which may result
-    in higher application performance. However, this will prevent
-    Embree from using AVX optimizations to achieve higher ray tracing
-    performance, thus applications that trace many rays may still
-    perform better with the default setting of simd256, even though
-    this reduces frequency on some CPUs.
+    either:
+
+a)  simd128 to run at highest frequency
+b)  simd256 to run at AVX2-heavy frequency level
+c)  simd512 to run at heavy AVX512 frequency level. When some frequency
+    level is specified, Embree will avoid doing optimizations that may
+    reduce the frequency level below the level specified. E.g. if your
+    app does not use AVX instructions setting
+    "frequency\_level=simd128" will cause some CPUs to run at highest
+    frequency, which may result in higher application performance if
+    you do much shading. If you application heavily uses AVX code, you
+    should best set the frequency level to simd256. Per default Embree
+    tries to avoid reducing the frequency of the CPU by setting the
+    simd256 level only when the CPU has no significant down clocking.
 
 Different configuration options should be separated by commas, e.g.:
 
@@ -1383,6 +1342,10 @@ Possible properties to query are:
     back face culling is enabled. This is only the case if Embree is
     compiled with `EMBREE_BACKFACE_CULLING` enabled.
 
+-   `RTC_DEVICE_PROPERTY_COMPACT_POLYS_ENABLED`: Queries whether
+    compact polys is enabled. This is only the case if Embree is
+    compiled with `EMBREE_COMPACT_POLYS` enabled.
+
 -   `RTC_DEVICE_PROPERTY_FILTER_FUNCTION_SUPPORTED`: Queries whether
     filter functions are supported, which is the case if Embree is
     compiled with `EMBREE_FILTER_FUNCTION` enabled.
@@ -1421,7 +1384,7 @@ Possible properties to query are:
     0.  internal tasking system
     1.  Intel Threading Building Blocks (TBB)
     2.  Parallel Patterns Library (PPL)
--   `RTC_DEVICE_PROPERTY_COMMIT_JOIN_SUPPORTED`: Queries whether
+-   `RTC_DEVICE_PROPERTY_JOIN_COMMIT_SUPPORTED`: Queries whether
     `rtcJoinCommitScene` is supported. This is not the case when Embree
     is compiled with PPL or older versions of TBB.
 
@@ -1658,6 +1621,37 @@ and an error code is set that can be queried using `rtcGetDeviceError`.
 #### SEE ALSO {#see-also}
 
 [rtcRetainScene], [rtcReleaseScene]
+
+
+
+rtcGetSceneDevice
+-----------------
+
+#### NAME {#name}
+
+    rtcGetSceneDevice - returns the device the scene got created in
+
+#### SYNOPSIS {#synopsis}
+
+    #include <embree3/rtcore.h>
+
+    RTCDevice rtcGetSceneDevice(RTCScene scene);
+
+#### DESCRIPTION {#description}
+
+This function returns the device object the scene got created in. The
+returned handle own one additional reference to the device object, thus
+you should need to call `rtcReleaseDevice` when the returned handle is
+no longer required.
+
+#### EXIT STATUS {#exit-status}
+
+On failure an error code is set that can be queried using
+`rtcGetDeviceError`.
+
+#### SEE ALSO {#see-also}
+
+[rtcReleaseDevice]
 
 
 
@@ -2184,8 +2178,8 @@ for the specified scene (`scene` argument). Possible scene flags are:
     neighboring primitives.
 
 -   `RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION`: Enables support for a
-    filter function inside the intersection context. See Section
-    [rtcInitIntersectContext] for more details.
+    filter function inside the intersection context for this scene. See
+    Section [rtcInitIntersectContext] for more details.
 
 Multiple flags can be enabled using an `or` operation, e.g.
 `RTC_SCENE_FLAG_COMPACT | RTC_SCENE_FLAG_ROBUST`.
@@ -2351,6 +2345,8 @@ rtcNewGeometry
      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE,
      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE,
      RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE,
+     RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE,
+     RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE,
      RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE,
      RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE,
      RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE,
@@ -2391,6 +2387,8 @@ bases (`RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE`,
 `RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE`,
 `RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE`,
 `RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE`,
+`RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE`,
+`RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE`,
 `RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE`,
 `RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE`,
 `RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE`,
@@ -2871,17 +2869,23 @@ RTC\_GEOMETRY\_TYPE\_CURVE
     RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE - 
       flat normal oriented curve geometry with Catmull-Rom basis
 
+    RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE -
+      capped cone curve geometry with linear basis - discontinous at edge boundaries
+
+    RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE -
+      capped cone curve geometry with linear basis and spherical ending
+
     RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE -
-      sweep surface curve geometry with cubic Bézier basis
+      swept surface curve geometry with cubic Bézier basis
 
     RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE -
-      sweep surface curve geometry with cubic B-spline basis
+      swept surface curve geometry with cubic B-spline basis
 
     RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE -
-      sweep surface curve geometry with cubic Hermite basis
+      swept surface curve geometry with cubic Hermite basis
 
     RTC_GEOMETRY_TYPE_ROUND_CATMULL_ROM_CURVE -
-      sweep surface curve geometry with Catmull-Rom basis
+      swept surface curve geometry with Catmull-Rom basis
 
 #### SYNOPSIS {#synopsis}
 
@@ -2896,6 +2900,8 @@ RTC\_GEOMETRY\_TYPE\_CURVE
     rtcNewGeometry(device, RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_BSPLINE_CURVE);
     rtcNewGeometry(device, RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_HERMITE_CURVE);
     rtcNewGeometry(device, RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_CATMULL_ROM_CURVE);
+    rtcNewGeometry(device, RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE);
+    rtcNewGeometry(device, RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE);
     rtcNewGeometry(device, RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE);
     rtcNewGeometry(device, RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE);
     rtcNewGeometry(device, RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE);
@@ -2914,6 +2920,8 @@ created by passing `RTC_GEOMETRY_TYPE_FLAT_LINEAR_CURVE`,
 `RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_FLAT_BSPLINE_CURVE`,
 `RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_FLAT_HERMITE_CURVE`,
 `RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_FLAT_CATMULL_ROM_CURVE`,
+`RTC_GEOMETRY_TYPE_CONE_LINEAR_CURVE`,
+`RTC_GEOMETRY_TYPE_ROUND_LINEAR_CURVE`,
 `RTC_GEOMETRY_TYPE_ROUND_BEZIER_CURVE`,
 `RTC_GEOMETRY_TYPE_ROUND_BSPLINE_CURVE`,
 `RTC_GEOMETRY_TYPE_ROUND_HERMITE_CURVE`, or
@@ -2942,11 +2950,34 @@ vertex (`x`, `y`, `z`, `r` order and `RTC_FORMAT_FLOAT4` format) and
 the normal buffer stores a single precision normal per control vertex
 (`x`, `y`, `z` order and `RTC_FORMAT_FLOAT3` format).
 
+##### Linear Basis
+
 For the linear basis the indices point to the first of 2 consecutive
 control points in the vertex buffer. The first control point is the
 start and the second control point the end of the line segment. When
 constructing hair strands in this basis, the end-point can be shared
 with the start of the next line segment.
+
+For the linear basis the user optionally can provide a flags buffer of
+type `RTC_BUFFER_TYPE_FLAGS` which contains bytes that encode if the
+left neighbor segment (`RTC_CURVE_FLAG_NEIGHBOR_LEFT` flag) and/or
+right neighbor segment (`RTC_CURVE_FLAG_NEIGHBOR_RIGHT` flags) exist
+(see [RTCCurveFlags]). If this buffer is not set, than the left/right
+neighbor bits are automatically calculated base on the index buffer
+(left segment exists if segment(id-1)+1 == segment(id) and right
+segment exists if segment(id+1)-1 == segment(id)).
+
+A left neighbor segment is assumed to end at the start vertex of the
+current segement, and to start at the previous vertex in the vertex
+buffer. Similarly, the right neighbor segment is assumed to start at
+the end vertex of the current segment, and to end at the next vertex in
+the vertex buffer.
+
+Only when the left and right bits are properly specified the current
+segment can properly attach to the left and/or right neighbor,
+otherwise the touching area may not get rendererd properly.
+
+##### Bézier Basis
 
 For the cubic Bézier basis the indices point to the first of 4
 consecutive control points in the vertex buffer. These control points
@@ -2954,6 +2985,8 @@ use the cubic Bézier basis, where the first control point represents
 the start point of the curve, and the 4th control point the end point
 of the curve. The Bézier basis is interpolating, thus the curve does go
 exactly through the first and fourth control vertex.
+
+##### B-spline Basis
 
 For the cubic B-spline basis the indices point to the first of 4
 consecutive control points in the vertex buffer. These control points
@@ -2965,6 +2998,8 @@ neighboring curve segments, e.g. the curves (p0,p1,p2,p3) and
 (p1,p2,p3,p4) are C1 continuous. This feature make this basis a good
 choise to construct continuous multi-segment curves, as memory
 consumption can be kept minimal.
+
+##### Hermite Basis
 
 For the cubic Hermite basis the indices point to the first of 2
 consecutive points in the vertex buffer, and the first of 2 consecutive
@@ -2978,9 +3013,13 @@ shared. Different versions of Catmull-Rom splines can be easily
 constructed usig the Hermite basis, by calculating a proper tangent
 buffer from the control points.
 
+##### Catmull-Rom Basis
+
 For the Catmull-Rom basis the indices point to the first of 4
 consecutive control points in the vertex buffer. This basis goes
 through p1 and p2, with tangents (p2-p0)/2 and (p3-p1)/2.
+
+##### Flat Curves
 
 The `RTC_GEOMETRY_TYPE_FLAT_*` flat mode is a fast mode designed to
 render distant hair. In this mode the curve is rendered as a connected
@@ -2989,6 +3028,8 @@ subpixel size, and zooming onto the curve might show geometric
 artifacts. The number of quads to subdivide into can be specified
 through the `rtcSetGeometryTessellationRate` function. By default the
 tessellation rate is 4.
+
+##### Normal Oriented Curves
 
 The `RTC_GEOMETRY_TYPE_NORMAL_ORIENTED_*` mode is a mode designed to
 render blades of grass. In this mode a vertex spline has to get
@@ -3015,13 +3056,26 @@ normals are parallel to the curve direction. For this reason the
 provided normals should best be kept as perpendicular to the curve
 direction as possible.
 
+##### Round Curves
+
 In the `RTC_GEOMETRY_TYPE_ROUND_*` round mode, a real geometric surface
 is rendered for the curve, which is more expensive but allows closeup
-views. This mode renders a sweep surface by sweeping a varying radius
-circle tangential along the curve. As a limitation, the radius of the
-curve has to be smaller than the curvature radius of the curve at each
-location on the curve. The round mode is currently not supported for
-the linear basis.
+views.
+
+For the linear basis the round mode renders a cone that tangentially
+touches a start-sphere and end-sphere. The start sphere is rendered
+when no previous segments is indicated by the neighbor bits. The end
+sphere is always rendered but parts that lie inside the next segment
+are clipped away (if that next segment exists). This way a curve is
+closed on both ends and the interiour will render properly as long as
+only neighboring segments penetrate into a segment. For this to work
+properly it is important that the flags buffer is properly populated
+with neighbor information.
+
+For the cubic polynomial bases, the round mode renders a sweep surface
+by sweeping a varying radius circle tangential along the curve. As a
+limitation, the radius of the curve has to be smaller than the
+curvature radius of the curve at each location on the curve.
 
 The intersection with the curve segment stores the parametric hit
 location along the curve segment as u-coordinate (range 0 to +1).
@@ -3054,7 +3108,7 @@ queried using `rtcGetDeviceError`.
 
 #### SEE ALSO {#see-also}
 
-[rtcNewGeometry]
+[rtcNewGeometry], [RTCCurveFlags]
 
 
 
@@ -3182,6 +3236,10 @@ Please have a look at the `rtcSetGeometryBoundsFunction`,
 `rtcSetGeometryIntersectFunction`, and `rtcSetGeometryOccludedFunction`
 functions on the implementation of the callback functions.
 
+Primitives of a user geometry are ignored during rendering when their
+bounds are empty, thus bounds have lower&gt;upper in at least one
+dimension.
+
 See tutorial [User Geometry] for an example of how to use the
 user-defined geometries.
 
@@ -3266,6 +3324,49 @@ queried using `rtcGetDeviceError`.
 
 [rtcNewGeometry], [rtcSetGeometryInstancedScene],
 [rtcSetGeometryTransform]
+
+
+
+RTCCurveFlags
+-------------
+
+#### NAME {#name}
+
+    RTCCurveFlags - per segment flags for curve geometry
+
+#### SYNOPSIS {#synopsis}
+
+    #include <embree3/rtcore.h>
+
+enum RTCCurveFlags { RTC\_CURVE\_FLAG\_NEIGHBOR\_LEFT = (1 &lt;&lt; 0),
+RTC\_CURVE\_FLAG\_NEIGHBOR\_RIGHT = (1 &lt;&lt; 1) };
+
+#### DESCRIPTION {#description}
+
+The RTCCurveFlags type is used for linear curves to determine if the
+left and/or right neighbor segment exist. Therefore one attaches a
+buffer of type RTC\_BUFFER\_TYPE\_FLAGS to the curve geometry which
+stores an individual byte per curve segment.
+
+If the RTC\_CURVE\_FLAG\_NEIGHBOR\_LEFT flag in that byte is enabled
+for a curve segment, then the left segment exists (which starts one
+vertex before the start vertex of the current curve) and the current
+segment is rendered to properly attach to that segment.
+
+If the RTC\_CURVE\_FLAG\_NEIGHBOR\_RIGHT flag in that byte is enabled
+for a curve segment, then the right segment exists (which ends one
+vertex after the end vertex of the current curve) and the current
+segment is rendered to properly attach to that segment.
+
+When not properly specifying left and right flags for linear curves,
+the rendering at the ending of these curves may not look correct, in
+particular when round linear curves are viewed from the inside.
+
+#### EXIT STATUS {#exit-status}
+
+#### SEE ALSO {#see-also}
+
+[RTC\_GEOMETRY\_TYPE\_CURVE]
 
 
 
@@ -3835,6 +3936,166 @@ On failure an error code is set that can be queried using
 #### SEE ALSO {#see-also}
 
 [rtcSetGeometryBuffer], [rtcSetSharedGeometryBuffer]
+
+
+
+RTCFormat
+---------
+
+#### NAME {#name}
+
+    RTCFormat - specifies format of data in buffers
+
+#### SYNOPSIS {#synopsis}
+
+    #include <embree3/rtcore_ray.h>
+
+    enum RTCFormat
+    {
+      RTC_FORMAT_UINT,
+      RTC_FORMAT_UINT2,
+      RTC_FORMAT_UINT3,
+      RTC_FORMAT_UINT4,
+
+      RTC_FORMAT_FLOAT,
+      RTC_FORMAT_FLOAT2,
+      RTC_FORMAT_FLOAT3,
+      RTC_FORMAT_FLOAT4,
+      RTC_FORMAT_FLOAT5,
+      RTC_FORMAT_FLOAT6,
+      RTC_FORMAT_FLOAT7,
+      RTC_FORMAT_FLOAT8,
+      RTC_FORMAT_FLOAT9,
+      RTC_FORMAT_FLOAT10,
+      RTC_FORMAT_FLOAT11,
+      RTC_FORMAT_FLOAT12,
+      RTC_FORMAT_FLOAT13,
+      RTC_FORMAT_FLOAT14,
+      RTC_FORMAT_FLOAT15,
+      RTC_FORMAT_FLOAT16,
+
+      RTC_FORMAT_FLOAT3X4_ROW_MAJOR,
+      RTC_FORMAT_FLOAT4X4_ROW_MAJOR,
+
+      RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR,
+      RTC_FORMAT_FLOAT4X4_COLUMN_MAJOR,
+
+      RTC_FORMAT_GRID,
+
+};
+
+#### DESCRIPTION {#description}
+
+The `RTFormat` structure defines the data format stored in data buffers
+provided to Embree using the [rtcSetGeometryBuffer],
+[rtcSetSharedGeometryBuffer], and [rtcSetNewGeometryBuffer] API
+calls.
+
+The `RTC_FORMAT_UINT/2/3/4` format are used to specify that data
+buffers store unsigned integers, or unsigned integer vectors of size
+2,3 or 4. This format has typically to get used when specifying index
+buffers, e.g. `RTC_FORMAT_UINT3` for triangle meshes.
+
+The `RTC_FORMAT_FLOAT/2/3/4...` format are used to specify that data
+buffers store single precision floating point values, or vectors there
+of (size 2,3,4, etc.). This format is typcally used to specify to
+format of vertex buffers, e.g. the `RTC_FORMAT_FLOAT3` type for vertex
+buffers of triangle meshes.
+
+The `RTC_FORMAT_FLOAT3X4_ROW_MAJOR` and
+`RTC_FORMAT_FLOAT3X4_COLUMN_MAJOR` formats, specify a 3x4 floating
+point matrix layed out either row major or column major. The
+`RTC_FORMAT_FLOAT4X4_ROW_MAJOR` and `RTC_FORMAT_FLOAT4X4_COLUMN_MAJOR`
+formats, specify a 4x4 floating point matrix layed out either row major
+or column major. These matrix formats are used in the
+[rtcSetGeometryTransform] function in order to set a transformation
+matrix for geometries.
+
+The `RTC_FORMAT_GRID` is a special data format used to specify grid
+primitives of layout RTCGrid when creating grid geometries (see
+[RTC\_GEOMETRY\_TYPE\_GRID]).
+
+#### EXIT STATUS {#exit-status}
+
+#### SEE ALSO {#see-also}
+
+[rtcSetGeometryBuffer], [rtcSetSharedGeometryBuffer],
+[rtcSetNewGeometryBuffer], [rtcSetGeometryTransform]
+
+
+
+RTCBufferType
+-------------
+
+#### NAME {#name}
+
+    RTCFormat - specifies format of data in buffers
+
+#### SYNOPSIS {#synopsis}
+
+    #include <embree3/rtcore_ray.h>
+
+    enum RTCBufferType
+    {
+      RTC_BUFFER_TYPE_INDEX            = 0,
+      RTC_BUFFER_TYPE_VERTEX           = 1,
+      RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE = 2,
+      RTC_BUFFER_TYPE_NORMAL           = 3,
+      RTC_BUFFER_TYPE_TANGENT          = 4,
+      RTC_BUFFER_TYPE_NORMAL_DERIVATIVE = 5,
+
+      RTC_BUFFER_TYPE_GRID                 = 8,
+
+      RTC_BUFFER_TYPE_FACE                 = 16,
+      RTC_BUFFER_TYPE_LEVEL                = 17,
+      RTC_BUFFER_TYPE_EDGE_CREASE_INDEX    = 18,
+      RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT   = 19,
+      RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX  = 20,
+      RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT = 21,
+      RTC_BUFFER_TYPE_HOLE                 = 22,
+
+      RTC_BUFFER_TYPE_FLAGS = 32
+    };
+
+#### DESCRIPTION {#description}
+
+The `RTBufferType` structure defines slots to assign data buffers to
+using the [rtcSetGeometryBuffer], [rtcSetSharedGeometryBuffer], and
+[rtcSetNewGeometryBuffer] API calls.
+
+For most geometry types the `RTC_BUFFER_TYPE_INDEX` slot is used to
+assign an index buffer, while the `RTC_BUFFER_TYPE_VERTEX` is used to
+assign the corresponding vertex buffer.
+
+The `RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE` slot can get used to assign
+arbitrary additional vertex data which can get interpolated using the
+[rtcInterpolate] API call.
+
+The `RTC_BUFFER_TYPE_NORMAL`, `RTC_BUFFER_TYPE_TANGENT`, and
+`RTC_BUFFER_TYPE_NORMAL_DERIVATIVE` are special buffers required to
+assign per vertex normals, tangents, and normal derivatives for some
+curve types.
+
+The `RTC_BUFFER_TYPE_GRID` buffer is used to assign the grid primitive
+buffer for grid geometries (see [RTC\_GEOMETRY\_TYPE\_GRID]).
+
+The `RTC_BUFFER_TYPE_FACE`, `RTC_BUFFER_TYPE_LEVEL`,
+`RTC_BUFFER_TYPE_EDGE_CREASE_INDEX`,
+`RTC_BUFFER_TYPE_EDGE_CREASE_WEIGHT`,
+`RTC_BUFFER_TYPE_VERTEX_CREASE_INDEX`,
+`RTC_BUFFER_TYPE_VERTEX_CREASE_WEIGHT`, and `RTC_BUFFER_TYPE_HOLE` are
+special buffers required to create subdivision meshes (see
+[RTC\_GEOMETRY\_TYPE\_SUBDIVISION]).
+
+The `RTC_BUFFER_TYPE_FLAGS` can get used to add additional flag per
+primitive of a geometry, and is currently only used for linear curves.
+
+#### EXIT STATUS {#exit-status}
+
+#### SEE ALSO {#see-also}
+
+[rtcSetGeometryBuffer], [rtcSetSharedGeometryBuffer],
+[rtcSetNewGeometryBuffer]
 
 
 
@@ -6006,10 +6267,16 @@ rtcInitIntersectContext
     {
       enum RTCIntersectContextFlags flags;
       RTCFilterFunctionN filter;
+      
       #if RTC_MAX_INSTANCE_LEVEL_COUNT > 1
-      unsigned int instStackSize;
+        unsigned int instStackSize;
       #endif
+      
       unsigned int instID[RTC_MAX_INSTANCE_LEVEL_COUNT];
+
+      #if RTC_MIN_WIDTH
+        float minWidthDistanceFactor;
+      #endif
     };
 
     void rtcInitIntersectContext(
@@ -6052,7 +6319,14 @@ such a per ray-query filter function can be useful to implement
 modifications of the behavior of the query, such as collecting all hits
 or accumulating transparencies. The support for the context filter
 function must be enabled for a scene by using the
-`RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION` scene flag.
+`RTC_SCENE_FLAG_CONTEXT_FILTER_FUNCTION` scene flag. In case of
+instancing this feature has to get enabled also for each instantiated
+scene.
+
+The minWidthDistanceFactor value controls the target size of the curve
+radii when the min-width feature is enabled. Please see the
+[rtcSetGeometryMaxRadiusScale] function for more details on the
+min-width feature.
 
 It is guaranteed that the pointer to the intersection context passed to
 a ray query is directly passed to the registered callback functions.
@@ -6956,7 +7230,9 @@ No error code is set by this function.
 [rtcPointQuery], [rtcSetGeometryPointQueryFunction]
 
 
-\#\# rtcPointQuery
+
+rtcPointQuery
+-------------
 
 #### NAME {#name}
 
@@ -7665,6 +7941,9 @@ components, and a single SSE store to set up the `dir` and `time`
 components of a single ray (`RTCRay` type). Storing these values using
 scalar stores causes a store-to-load forwarding penalty because Embree
 is reading these components using SSE loads later on.
+
+
+
 Embree Tutorials
 ================
 
@@ -7761,10 +8040,12 @@ It can be compiled as both C and C++. It demonstrates how to initialize
 a device and scene, and how to intersect rays with the scene.
 There is no image output to keep the tutorial as simple as possible.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/minimal/minimal.cpp)
+
 Triangle Geometry
 -----------------
 
-![][imgTriangleGeometry]
+[![][imgTriangleGeometry]](https://github.com/embree/embree/blob/master/tutorials/triangle_geometry/triangle_geometry_device.cpp)
 
 This tutorial demonstrates the creation of a static cube and ground
 plane using triangle meshes. It also demonstrates the use of the
@@ -7772,10 +8053,12 @@ plane using triangle meshes. It also demonstrates the use of the
 and hard shadows. The cube sides are colored based on the ID of the hit
 primitive.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/triangle_geometry/triangle_geometry_device.cpp)
+
 Dynamic Scene
 -------------
 
-![][imgDynamicScene]
+[![][imgDynamicScene]](https://github.com/embree/embree/blob/master/tutorials/dynamic_scene/dynamic_scene_device.cpp)
 
 This tutorial demonstrates the creation of a dynamic scene, consisting
 of several deforming spheres. Half of the spheres use the
@@ -7785,10 +8068,12 @@ to use a refitting strategy for these spheres, the other half uses the
 performance rebuild of their spatial data structure each frame. The
 spheres are colored based on the ID of the hit sphere geometry.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/dynamic_scene/dynamic_scene_device.cpp)
+
 Multi Scene Geometry
 -------------
 
-![][imgDynamicScene]
+[![][imgDynamicScene]](https://github.com/embree/embree/blob/master/tutorials/multiscene_geometry/multiscene_geometry_device.cpp)
 
 This tutorial demonstrates the creation of multiple scenes sharing the
 same geometry objects.  Here, three scenes are built.  One with all
@@ -7796,10 +8081,12 @@ the dynamic spheres of the Dynamic Scene test and two others each with
 half.  The ground plane is shared by all three scenes.  The space bar
 is used to cycle the scene chosen for rendering.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/multiscene_geometry/multiscene_geometry_device.cpp)
+
 User Geometry
 -------------
 
-![][imgUserGeometry]
+[![][imgUserGeometry]](https://github.com/embree/embree/blob/master/tutorials/user_geometry/user_geometry_device.cpp)
 
 This tutorial shows the use of user-defined geometry, to re-implement
 instancing, and to add analytic spheres. A two-level scene is created,
@@ -7809,10 +8096,12 @@ The spheres are colored using the instance ID and geometry ID of the hit
 sphere, to demonstrate how the same geometry instanced in different
 ways can be distinguished.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/user_geometry/user_geometry_device.cpp)
+
 Viewer
 ------
 
-![][imgViewer]
+[![][imgViewer]](https://github.com/embree/embree/blob/master/tutorials/viewer/viewer_device.cpp)
 
 This tutorial demonstrates a simple OBJ viewer that traces primary
 visibility rays only. A scene consisting of multiple meshes is created,
@@ -7825,10 +8114,12 @@ work:
 
     ./viewer -i model.obj
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/viewer/viewer_device.cpp)
+
 Stream Viewer
 -------------
 
-![][imgViewerStream]
+[![][imgViewerStream]](https://github.com/embree/embree/blob/master/tutorials/viewer_stream/viewer_stream_device.cpp)
 
 This tutorial is a simple OBJ viewer that demonstrates the use of ray
 streams. You need to specify an OBJ file at the command line for this
@@ -7836,10 +8127,12 @@ tutorial to work:
 
     ./viewer_stream -i model.obj
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/viewer_stream/viewer_stream_device.cpp)
+
 Intersection Filter
 -------------------
 
-![][imgIntersectionFilter]
+[![][imgIntersectionFilter]](https://github.com/embree/embree/blob/master/tutorials/intersection_filter/intersection_filter_device.cpp)
 
 This tutorial demonstrates the use of filter callback functions to
 efficiently implement transparent objects. The filter function used for
@@ -7849,10 +8142,12 @@ properly, by potentially shooting secondary rays. The filter function
 used for shadow rays accumulates the transparency of all surfaces along
 the ray, and terminates traversal if an opaque occluder is hit.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/intersection_filter/intersection_filter_device.cpp)
+
 Instanced Geometry
 ------------------
 
-![][imgInstancedGeometry]
+[![][imgInstancedGeometry]](https://github.com/embree/embree/blob/master/tutorials/instanced_geometry/instanced_geometry_device.cpp)
 
 This tutorial demonstrates the in-build instancing feature of Embree, by
 instancing a number of other scenes built from triangulated spheres. The
@@ -7860,10 +8155,12 @@ spheres are again colored using the instance ID and geometry ID of the
 hit sphere, to demonstrate how the same geometry instanced in different
 ways can be distinguished.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/instanced_geometry/instanced_geometry_device.cpp)
+
 Multi Level Instancing
 ----------------------
 
-![][imgMultiLevelInstancing]
+[![][imgMultiLevelInstancing]](https://github.com/embree/embree/blob/master/tutorials/multi_instanced_geometry/multi_instanced_geometry_device.cpp)
 
 This tutorial demonstrates multi-level instancing, i.e., nesting instances
 into instances. To enable the tutorial, set the compile-time variable
@@ -7881,10 +8178,12 @@ During shading, the instance ID stack is used to accumulate
 normal transformation matrices for each hit. The tutorial visualizes
 transformed normals as colors.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/multi_instanced_geometry/multi_instanced_geometry_device.cpp)
+
 Path Tracer
 -----------
 
-![][imgPathtracer]
+[![][imgPathtracer]](https://github.com/embree/embree/blob/master/tutorials/pathtracer/pathtracer_device.cpp)
 
 This tutorial is a simple path tracer, based on the viewer tutorial.
 
@@ -7906,58 +8205,72 @@ To render these models execute the following:
     ./pathtracer -c crown/crown.ecs
     ./pathtracer -c asian_dragon/asian_dragon.ecs
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/pathtracer/pathtracer_device.cpp)
+
 Hair
 ----
 
-![][imgHairGeometry]
+[![][imgHairGeometry]](https://github.com/embree/embree/blob/master/tutorials/hair_geometry/hair_geometry_device.cpp)
 
 This tutorial demonstrates the use of the hair geometry to render a
 hairball.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/hair_geometry/hair_geometry_device.cpp)
+
 Curve Geometry
 --------------
 
-![][imgCurveGeometry]
+[![][imgCurveGeometry]](https://github.com/embree/embree/blob/master/tutorials/curve_geometry/curve_geometry_device.cpp)
 
-This tutorial demonstrates the use of the B-Spline and Catmull-Rom curve geometries.
+This tutorial demonstrates the use of the Linear Basis, B-Spline, and Catmull-Rom curve geometries.
+
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/curve_geometry/curve_geometry_device.cpp)
 
 Subdivision Geometry
 --------------------
 
-![][imgSubdivisionGeometry]
+[![][imgSubdivisionGeometry]](https://github.com/embree/embree/blob/master/tutorials/subdivision_geometry/subdivision_geometry_device.cpp)
 
 This tutorial demonstrates the use of Catmull-Clark subdivision
 surfaces.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/subdivision_geometry/subdivision_geometry_device.cpp)
+
 Displacement Geometry
 ---------------------
 
-![][imgDisplacementGeometry]
+[![][imgDisplacementGeometry]](https://github.com/embree/embree/blob/master/tutorials/displacement_geometry/displacement_geometry_device.cpp)
 
 This tutorial demonstrates the use of Catmull-Clark subdivision
 surfaces with procedural displacement mapping using a constant edge
 tessellation level.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/displacement_geometry/displacement_geometry_device.cpp)
+
 Grid Geometry
 ---------------------
 
-![][imgGridGeometry]
+[![][imgGridGeometry]](https://github.com/embree/embree/tree/master/tutorials/grid_geometry)
 
 This tutorial demonstrates the use of the memory efficient grid
 primitive to handle highly tessellated and displaced geometry.
 
+[Source Code](https://github.com/embree/embree/tree/master/tutorials/grid_geometry)
+
 Point Geometry
 ---------------------
 
-![][imgPointGeometry]
+[![][imgPointGeometry]](https://github.com/embree/embree/blob/master/tutorials/point_geometry/point_geometry_device.cpp)
 
 This tutorial demonstrates the use of the three representations
 of point geometry.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/point_geometry/point_geometry_device.cpp)
+
 Motion Blur Geometry
 --------------------
 
-![][imgMotionBlurGeometry]
+[![][imgMotionBlurGeometry]](https://github.com/embree/embree/blob/master/tutorials/motion_blur_geometry/motion_blur_geometry_device.cpp)
 
 This tutorial demonstrates rendering of motion blur using the
 multi-segment motion blur feature. Shown is motion blur of a triangle mesh,
@@ -7971,10 +8284,12 @@ The number of time steps used can be configured using the `--time-steps
 geometry can be rendered at a specific time using the the `--time
 <float>` command line parameter.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/motion_blur_geometry/motion_blur_geometry_device.cpp)
+
 Quaternion Motion Blur
 ----------------------
 
-![][imgQuaternionMotionBlur]
+[![][imgQuaternionMotionBlur]](https://github.com/embree/embree/blob/master/tutorials/quaternion_motion_blur/quaternion_motion_blur_device.cpp)
 
 This tutorial demonstrates rendering of motion blur using quaternion
 interpolation. Shown is motion blur using spherical linear interpolation of
@@ -7982,18 +8297,21 @@ the rotational component of the instance transformation on the left and
 simple linear interpolation of the instance transformation on the right. The
 number of time steps can be modified as well.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/quaternion_motion_blur/quaternion_motion_blur_device.cpp)
 
 Interpolation
 -------------
 
-![][imgInterpolation]
+[![][imgInterpolation]](https://github.com/embree/embree/blob/master/tutorials/interpolation/interpolation_device.cpp)
 
 This tutorial demonstrates interpolation of user-defined per-vertex data.
+
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/interpolation/interpolation_device.cpp)
 
 Closest Point
 ----------------------
 
-![][imgClosestPoint]
+[![][imgClosestPoint]](https://github.com/embree/embree/blob/master/tutorials/closest_point/closest_point_device.cpp)
 
 This tutorial demonstrates a use-case of the point query API. The scene
 consists of a simple collection of objects that are instanced and for several
@@ -8003,25 +8321,31 @@ implemented for Embree internal and for user-defined instancing. The tutorial
 also illustrates how to handle instance transformations that are not
 similarity transforms.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/closest_point/closest_point_device.cpp)
+
 Voronoi
 ----------------------
 
-![][imgVoronoi]
+[![][imgVoronoi]](https://github.com/embree/embree/blob/master/tutorials/voronoi/voronoi_device.cpp)
 
 This tutorial demonstrates how to implement nearest neighbour lookups using
 the point query API. Several colored points are located on a plane and the
 corresponding voroni regions are illustrated.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/voronoi/voronoi_device.cpp)
+
 Collision Detection
 ----------------------
 
-![][imgCollision]
+[![][imgCollision]](https://github.com/embree/embree/blob/master/tutorials/collide/collide_device.cpp)
 
 This tutorial demonstrates how to implement collision detection using
 the collide API. A simple cloth solver is setup to collide with a sphere.
 
 The cloth can be reset with the `space` bar.  The sim stepped once with `n` 
 and continuous simulation started and paused with `p`.
+
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/collide/collide_device.cpp)
 
 BVH Builder
 -----------
@@ -8031,12 +8355,16 @@ of Embree to build a bounding volume hierarchy with a user-defined
 memory layout using a high-quality SAH builder using spatial splits, a
 standard SAH builder, and a very fast Morton builder.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/bvh_builder/bvh_builder_device.cpp)
+
 BVH Access
 -----------
 
 This tutorial demonstrates how to access the internal triangle
 acceleration structure build by Embree. Please be aware that the
 internal Embree data structures might change between Embree updates.
+
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/bvh_access/bvh_access.cpp)
 
 Find Embree
 -----------
@@ -8047,6 +8375,8 @@ the Embree installation automatically, under Windows the `embree_DIR`
 CMake variable must be set to the following folder of the Embree
 installation: `C:\Program Files\Intel\Embree3`.
 
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/find_embree/CMakeLists.txt)
+
 Next Hit
 -----------
 
@@ -8054,6 +8384,8 @@ This tutorial demonstrates how to robustly enumerate all hits along
 the ray using multiple ray queries and an intersection filter
 function. To improve performance, the tutorial also supports
 collecting the next N hits in a single ray query.
+
+[Source Code](https://github.com/embree/embree/blob/master/tutorials/next_hit/next_hit_device.cpp)
 
 
 
@@ -8100,3 +8432,4 @@ collecting the next N hits in a single ray query.
 [imgInterpolation]: https://embree.github.io/images/interpolation.jpg
 [imgClosestPoint]: https://embree.github.io/images/closest_point.jpg
 [imgVoronoi]: https://embree.github.io/images/voronoi.jpg
+[imgCollision]: https://embree.github.io/images/collide.jpg

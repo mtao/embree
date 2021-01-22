@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -881,6 +868,36 @@ inline uniform bool isnan(uniform Vec3fa v)
 
 inline bool isnan(Vec3fa v)
 { return isnan(v.x+v.y+v.z); }
+
+typedef Vec3fa Vec3ff;
+typedef Vec3f Vec3f_;
+
+inline uniform Vec3f make_Vec3f_(uniform float w) { uniform Vec3f r; r.x = w; r.y = w; r.z = w; return r; }
+inline varying Vec3f make_Vec3f_(varying float w) { varying Vec3f r; r.x = w; r.y = w; r.z = w; return r; }
+
+inline uniform Vec3f make_Vec3f_(uniform Vec3f v) { uniform Vec3f r; r.x = v.x; r.y = v.y; r.z = v.z; return r; }
+inline varying Vec3f make_Vec3f_(varying Vec3f v) { varying Vec3f r; r.x = v.x; r.y = v.y; r.z = v.z; return r; }
+
+inline uniform Vec3f make_Vec3f_(uniform Vec3fa v) { uniform Vec3f r; r.x = v.x; r.y = v.y; r.z = v.z; return r; }
+inline varying Vec3f make_Vec3f_(varying Vec3fa v) { varying Vec3f r; r.x = v.x; r.y = v.y; r.z = v.z; return r; }
+
+inline uniform Vec3ff make_Vec3ff(uniform float w) { uniform Vec3ff r; r.x = w; r.y = w; r.z = w; r.w = w; return r; }
+inline varying Vec3ff make_Vec3ff(varying float w) { varying Vec3ff r; r.x = w; r.y = w; r.z = w; r.w = w; return r; }
+
+inline uniform Vec3ff make_Vec3ff(uniform Vec3f v) { uniform Vec3ff r; r.x = v.x; r.y = v.y; r.z = v.z; r.w = 0.0f; return r; }
+inline varying Vec3ff make_Vec3ff(varying Vec3f v) { varying Vec3ff r; r.x = v.x; r.y = v.y; r.z = v.z; r.w = 0.0f; return r; }
+
+inline uniform Vec3ff make_Vec3ff(uniform Vec3fa v) { uniform Vec3ff r; r.x = v.x; r.y = v.y; r.z = v.z; r.w = 0.0f; return r; }
+inline varying Vec3ff make_Vec3ff(varying Vec3fa v) { varying Vec3ff r; r.x = v.x; r.y = v.y; r.z = v.z; r.w = 0.0f; return r; }
+
+inline uniform Vec3ff make_Vec3ff(uniform Vec3f v, uniform float w) { uniform Vec3ff r; r.x = v.x; r.y = v.y; r.z = v.z; r.w = w; return r; }
+inline varying Vec3ff make_Vec3ff(varying Vec3f v, varying float w) { varying Vec3ff r; r.x = v.x; r.y = v.y; r.z = v.z; r.w = w; return r; }
+
+inline uniform Vec3ff make_Vec3ff(uniform Vec3fa v, uniform float w) { uniform Vec3ff r; r.x = v.x; r.y = v.y; r.z = v.z; r.w = w; return r; }
+inline varying Vec3ff make_Vec3ff(varying Vec3fa v, varying float w) { varying Vec3ff r; r.x = v.x; r.y = v.y; r.z = v.z; r.w = w; return r; }
+
+inline uniform Vec3ff make_Vec3ff(uniform float x, uniform float y, uniform float z, uniform float w) { uniform Vec3ff r; r.x = x; r.y = y; r.z = z; r.w = w; return r; }
+inline varying Vec3ff make_Vec3ff(varying float x, varying float y, varying float z, varying float w) { varying Vec3ff r; r.x = x; r.y = y; r.z = z; r.w = w; return r; }
 
 inline void out(uniform Vec3f v) { print("(%,%,%)",v.x,v.y,v.z); }
 inline void out(Vec3f v) { print("\n(%\n %\n %)",v.x,v.y,v.z); }

@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "bvh_refit.h"
 #include "bvh_statistics.h"
@@ -23,6 +10,7 @@
 #include "../geometry/trianglei.h"
 #include "../geometry/quadv.h"
 #include "../geometry/object.h"
+#include "../geometry/instance.h"
 
 namespace embree
 {
@@ -80,9 +68,9 @@ namespace embree
         return;
       }
 
-      if (ref.isAlignedNode())
+      if (ref.isAABBNode())
       {
-        AlignedNode* node = ref.alignedNode();
+        AABBNode* node = ref.getAABBNode();
         for (size_t i=0; i<N; i++) {
           NodeRef& child = node->child(i);
           if (unlikely(child == BVH::emptyNode)) continue;
@@ -104,9 +92,9 @@ namespace embree
         return subTreeBounds[subtrees++];
       }
 
-      if (ref.isAlignedNode())
+      if (ref.isAABBNode())
       {
-        AlignedNode* node = ref.alignedNode();
+        AABBNode* node = ref.getAABBNode();
         BBox3fa bounds[N];
 
         for (size_t i=0; i<N; i++)
@@ -148,11 +136,11 @@ namespace embree
         return leafBounds.leafBounds(ref);
       
       /* recurse if this is an internal node */
-      AlignedNode* node = ref.alignedNode();
+      AABBNode* node = ref.getAABBNode();
 
       /* enable exclusive prefetch for >= AVX platforms */      
 #if defined(__AVX__)      
-      ref.prefetchW();
+      BVH::prefetchW(ref);
 #endif      
       BBox3fa bounds[N];
 
@@ -244,5 +232,16 @@ namespace embree
     Builder* BVH8VirtualMeshRefitSAH (void* accel, UserGeometry* mesh, unsigned int geomID, size_t mode) { return new BVHNRefitT<8,UserGeometry,Object>((BVH8*)accel,BVH8VirtualMeshBuilderSAH(accel,mesh,geomID,mode),mesh,mode); }
 #endif
 #endif
+
+#if defined(EMBREE_GEOMETRY_INSTANCE)
+    Builder* BVH4InstanceMeshBuilderSAH (void* bvh, Instance* mesh, Geometry::GTypeMask gtype, unsigned int geomID, size_t mode);
+    Builder* BVH4InstanceMeshRefitSAH (void* accel, Instance* mesh, Geometry::GTypeMask gtype, unsigned int geomID, size_t mode) { return new BVHNRefitT<4,Instance,InstancePrimitive>((BVH4*)accel,BVH4InstanceMeshBuilderSAH(accel,mesh,gtype,geomID,mode),mesh,mode); }
+
+#if  defined(__AVX__)
+    Builder* BVH8InstanceMeshBuilderSAH (void* bvh, Instance* mesh, Geometry::GTypeMask gtype, unsigned int geomID, size_t mode);
+    Builder* BVH8InstanceMeshRefitSAH (void* accel, Instance* mesh, Geometry::GTypeMask gtype, unsigned int geomID, size_t mode) { return new BVHNRefitT<8,Instance,InstancePrimitive>((BVH8*)accel,BVH8InstanceMeshBuilderSAH(accel,mesh,gtype,geomID,mode),mesh,mode); }
+#endif
+#endif
+
   }
 }

@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "bvh.h"
 
@@ -185,7 +172,6 @@ namespace embree
 	/* clear temporary data for static geometry */
 	if (scene->isStaticAccel()) {
           prims.clear();
-          bvh->shrink();
         }
         bvh->cleanup();
         bvh->postBuild(t0);
@@ -232,8 +218,8 @@ namespace embree
       typedef BVHN<N> BVH;
       typedef typename BVH::NodeRef NodeRef;
       typedef typename BVH::NodeRecordMB4D NodeRecordMB4D;
-      typedef typename BVHN<N>::AlignedNodeMB AlignedNodeMB;
-      typedef typename BVHN<N>::AlignedNodeMB4D AlignedNodeMB4D;
+      typedef typename BVHN<N>::AABBNodeMB AABBNodeMB;
+      typedef typename BVHN<N>::AABBNodeMB4D AABBNodeMB4D;
       typedef typename BVHN<N>::Allocator BVH_Allocator;
 
       typedef SetMB Set;
@@ -340,8 +326,8 @@ namespace embree
           BVHBuilderMSMBlur::build<NodeRef>(primsMB,pinfo,scene->device,
                                              recalculatePrimRef,
                                              typename BVH::CreateAlloc(bvh),
-                                             typename BVH::AlignedNodeMB4D::Create(),
-                                             typename BVH::AlignedNodeMB4D::Set(),
+                                             typename BVH::AABBNodeMB4D::Create(),
+                                             typename BVH::AABBNodeMB4D::Set(),
                                              createLeafFunc,
                                              bvh->scene->progressInterface,
                                              settings);
@@ -388,7 +374,6 @@ namespace embree
 	/* clear temporary data for static geometry */
 	if (scene->isStaticAccel()) {
           primsMB.clear();
-          bvh->shrink();
         }
         bvh->cleanup();
         bvh->postBuild(t0);        

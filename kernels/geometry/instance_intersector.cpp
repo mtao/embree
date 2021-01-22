@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "instance_intersector.h"
 #include "../common/scene.h"
@@ -71,10 +58,10 @@ namespace embree
       if (likely(instance_id_stack::push(user_context, prim.instID_)))
       {
         const AffineSpace3fa world2local = instance->getWorld2Local();
-        const Vec3fa ray_org = ray.org;
-        const Vec3fa ray_dir = ray.dir;
-        ray.org = Vec3fa(xfmPoint(world2local, ray_org), ray.tnear());
-        ray.dir = Vec3fa(xfmVector(world2local, ray_dir), ray.time());
+        const Vec3ff ray_org = ray.org;
+        const Vec3ff ray_dir = ray.dir;
+        ray.org = Vec3ff(xfmPoint(world2local, ray_org), ray.tnear());
+        ray.dir = Vec3ff(xfmVector(world2local, ray_dir), ray.time());
         IntersectContext newcontext((Scene*)instance->object, user_context);
         instance->object->intersectors.intersect((RTCRayHit&)ray, &newcontext);
         ray.org = ray_org;
@@ -98,10 +85,10 @@ namespace embree
       if (likely(instance_id_stack::push(user_context, prim.instID_)))
       {
         const AffineSpace3fa world2local = instance->getWorld2Local();
-        const Vec3fa ray_org = ray.org;
-        const Vec3fa ray_dir = ray.dir;
-        ray.org = Vec3fa(xfmPoint(world2local, ray_org), ray.tnear());
-        ray.dir = Vec3fa(xfmVector(world2local, ray_dir), ray.time());
+        const Vec3ff ray_org = ray.org;
+        const Vec3ff ray_dir = ray.dir;
+        ray.org = Vec3ff(xfmPoint(world2local, ray_org), ray.tnear());
+        ray.dir = Vec3ff(xfmVector(world2local, ray_dir), ray.time());
         IntersectContext newcontext((Scene*)instance->object, user_context);
         instance->object->intersectors.occluded((RTCRay&)ray, &newcontext);
         ray.org = ray_org;
@@ -160,10 +147,10 @@ namespace embree
       if (likely(instance_id_stack::push(user_context, prim.instID_)))
       {
         const AffineSpace3fa world2local = instance->getWorld2Local(ray.time());
-        const Vec3fa ray_org = ray.org;
-        const Vec3fa ray_dir = ray.dir;
-        ray.org = Vec3fa(xfmPoint(world2local, ray_org), ray.tnear());
-        ray.dir = Vec3fa(xfmVector(world2local, ray_dir), ray.time());
+        const Vec3ff ray_org = ray.org;
+        const Vec3ff ray_dir = ray.dir;
+        ray.org = Vec3ff(xfmPoint(world2local, ray_org), ray.tnear());
+        ray.dir = Vec3ff(xfmVector(world2local, ray_dir), ray.time());
         IntersectContext newcontext((Scene*)instance->object, user_context);
         instance->object->intersectors.intersect((RTCRayHit&)ray, &newcontext);
         ray.org = ray_org;
@@ -187,10 +174,10 @@ namespace embree
       if (likely(instance_id_stack::push(user_context, prim.instID_)))
       {
         const AffineSpace3fa world2local = instance->getWorld2Local(ray.time());
-        const Vec3fa ray_org = ray.org;
-        const Vec3fa ray_dir = ray.dir;
-        ray.org = Vec3fa(xfmPoint(world2local, ray_org), ray.tnear());
-        ray.dir = Vec3fa(xfmVector(world2local, ray_dir), ray.time());
+        const Vec3ff ray_org = ray.org;
+        const Vec3ff ray_dir = ray.dir;
+        ray.org = Vec3ff(xfmPoint(world2local, ray_org), ray.tnear());
+        ray.dir = Vec3ff(xfmVector(world2local, ray_dir), ray.time());
         IntersectContext newcontext((Scene*)instance->object, user_context);
         instance->object->intersectors.occluded((RTCRay&)ray, &newcontext);
         ray.org = ray_org;

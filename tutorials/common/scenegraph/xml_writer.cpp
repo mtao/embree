@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "xml_writer.h"
 
@@ -35,7 +22,7 @@ namespace embree
     void store(const char* name, const Vec3fa& v);
     template<typename T> void store(const char* name, const std::vector<T>& vec);
     void store(const char* name, const avector<Vec3fa>& vec);
-    void store4f(const char* name, const avector<Vec3fa>& vec);
+    void store4f(const char* name, const avector<Vec3ff>& vec);
     void store_parm(const char* name, const float& v);
     void store_parm(const char* name, const Vec3fa& v);
     void store_parm(const char* name, const std::shared_ptr<Texture> tex);
@@ -141,7 +128,7 @@ namespace embree
     for (size_t i=0; i<vec.size(); i++) bin.write((char*)&vec[i],sizeof(Vec3f));
   }
 
-  void XMLWriter::store4f(const char* name, const avector<Vec3fa>& vec)
+  void XMLWriter::store4f(const char* name, const avector<Vec3ff>& vec)
   {
     std::streampos offset = bin.tellg();
     tab(); xml << "<" << name << " ofs=\"" << offset << "\" size=\"" << vec.size() << "\"/>" << std::endl;
@@ -528,7 +515,7 @@ namespace embree
     if (mesh->numTimeSteps() != 1) close("animated_positions");
     if (mesh->normals.size()) {
       if (mesh->numTimeSteps() != 1) open("animated_normals");
-      for (const auto& p : mesh->normals) store4f("normals",p);
+      for (const auto& p : mesh->normals) store("normals",p);
       if (mesh->numTimeSteps() != 1) close("animated_normals");
     }
     store("indices",indices);

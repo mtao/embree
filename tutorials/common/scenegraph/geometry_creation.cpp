@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "geometry_creation.h"
 
@@ -352,10 +339,22 @@ namespace embree
   {
     Ref<SceneGraph::HairSetNode> mesh = new SceneGraph::HairSetNode(RTC_GEOMETRY_TYPE_FLAT_BEZIER_CURVE,material,BBox1f(0,1),1);
     mesh->hairs.push_back(SceneGraph::HairSetNode::Hair(0,0));
-    mesh->positions[0].push_back(Vec3fa(center+Vec3fa(-radius,0,0),radius));
-    mesh->positions[0].push_back(Vec3fa(center+Vec3fa(0,0,0),radius));
-    mesh->positions[0].push_back(Vec3fa(center+Vec3fa(0,0,0),radius));
-    mesh->positions[0].push_back(Vec3fa(center+Vec3fa(+radius,0,0),radius));
+    mesh->positions[0].push_back(Vec3ff(center+Vec3fa(-radius,0,0),radius));
+    mesh->positions[0].push_back(Vec3ff(center+Vec3fa(0,0,0),radius));
+    mesh->positions[0].push_back(Vec3ff(center+Vec3fa(0,0,0),radius));
+    mesh->positions[0].push_back(Vec3ff(center+Vec3fa(+radius,0,0),radius));
+    return mesh.dynamicCast<SceneGraph::Node>();
+  }
+
+  Ref<SceneGraph::Node> SceneGraph::createSphere (const Vec3fa& center, const float radius, Ref<MaterialNode> material)
+  {
+    RTCGeometryType type = RTC_GEOMETRY_TYPE_SPHERE_POINT;
+    Ref<SceneGraph::PointSetNode> mesh = new SceneGraph::PointSetNode(type, material, BBox1f(0,1), 1);
+    mesh->positions[0].resize(1);
+    mesh->positions[0][0].x = center.x;
+    mesh->positions[0][0].y = center.y;
+    mesh->positions[0][0].z = center.z;
+    mesh->positions[0][0].w = radius;
     return mesh.dynamicCast<SceneGraph::Node>();
   }
 
@@ -382,7 +381,7 @@ namespace embree
     Ref<SceneGraph::PointSetNode> mesh = new SceneGraph::PointSetNode(type, material, BBox1f(0,1), 1);
     mesh->positions[0].resize(numVertices);
     if (subtype == ORIENTED_DISC) {
-      mesh->normals.push_back(avector<PointSetNode::Vertex>());
+      mesh->normals.push_back(avector<Vec3fa>());
       mesh->normals[0].resize(numVertices);
     }
 
@@ -421,10 +420,10 @@ namespace embree
       const Vec3fa p2 = p0 + len*Vec3fa(0,1,1);
       const Vec3fa p3 = p0 + len*Vec3fa(0,1,0);
       mesh->hairs.push_back(HairSetNode::Hair(0,0));
-      mesh->positions[0].push_back(Vec3fa(p0,r));
-      mesh->positions[0].push_back(Vec3fa(p1,r));
-      mesh->positions[0].push_back(Vec3fa(p2,r));
-      mesh->positions[0].push_back(Vec3fa(p3,r));
+      mesh->positions[0].push_back(Vec3ff(p0,r));
+      mesh->positions[0].push_back(Vec3ff(p1,r));
+      mesh->positions[0].push_back(Vec3ff(p2,r));
+      mesh->positions[0].push_back(Vec3ff(p3,r));
       return mesh.dynamicCast<SceneGraph::Node>();
     }
 
@@ -436,10 +435,10 @@ namespace embree
       const Vec3fa p2 = p0 + len*(normalize(dz)+normalize(dy));
       const Vec3fa p3 = p0 + len*normalize(dz);
       mesh->hairs.push_back(HairSetNode::Hair(unsigned(4*i),unsigned(i)));
-      mesh->positions[0].push_back(Vec3fa(p0,r));
-      mesh->positions[0].push_back(Vec3fa(p1,r));
-      mesh->positions[0].push_back(Vec3fa(p2,r));
-      mesh->positions[0].push_back(Vec3fa(p3,r));
+      mesh->positions[0].push_back(Vec3ff(p0,r));
+      mesh->positions[0].push_back(Vec3ff(p1,r));
+      mesh->positions[0].push_back(Vec3ff(p2,r));
+      mesh->positions[0].push_back(Vec3ff(p3,r));
     }
     return mesh.dynamicCast<SceneGraph::Node>();
   }
@@ -464,7 +463,7 @@ namespace embree
       const float y = cast_i2f(RandomSampler_getUInt(sampler));
       const float z = cast_i2f(RandomSampler_getUInt(sampler));
       const float w = cast_i2f(RandomSampler_getUInt(sampler));
-      mesh->positions[0][i] = Vec3fa(x,y,z,w);
+      mesh->positions[0][i] = Vec3ff(x,y,z,w);
     }
 
     if (mblur) 
@@ -475,7 +474,7 @@ namespace embree
         const float y = cast_i2f(RandomSampler_getUInt(sampler));
         const float z = cast_i2f(RandomSampler_getUInt(sampler));
         const float w = cast_i2f(RandomSampler_getUInt(sampler));
-        mesh->positions[1][i] = Vec3fa(x,y,z,w);
+        mesh->positions[1][i] = Vec3ff(x,y,z,w);
       }
     }
 
@@ -503,7 +502,7 @@ namespace embree
       const float y = cast_i2f(RandomSampler_getUInt(sampler));
       const float z = cast_i2f(RandomSampler_getUInt(sampler));
       const float w = cast_i2f(RandomSampler_getUInt(sampler));
-      mesh->positions[0][i] = Vec3fa(x,y,z,w);
+      mesh->positions[0][i] = Vec3fa(Vec3ff(x,y,z,w));
     }
 
     if (mblur) 
@@ -514,7 +513,7 @@ namespace embree
         const float y = cast_i2f(RandomSampler_getUInt(sampler));
         const float z = cast_i2f(RandomSampler_getUInt(sampler));
         const float w = cast_i2f(RandomSampler_getUInt(sampler));
-        mesh->positions[1][i] = Vec3fa(x,y,z,w);
+        mesh->positions[1][i] = Vec3fa(Vec3ff(x,y,z,w));
       }
     }
 
@@ -539,7 +538,7 @@ namespace embree
       const float y = cast_i2f(RandomSampler_getUInt(sampler));
       const float z = cast_i2f(RandomSampler_getUInt(sampler));
       const float w = cast_i2f(RandomSampler_getUInt(sampler));
-      mesh->positions[0][i] = Vec3fa(x,y,z,w);
+      mesh->positions[0][i] = Vec3fa(Vec3ff(x,y,z,w));
     }
 
     if (mblur) 
@@ -550,7 +549,7 @@ namespace embree
         const float y = cast_i2f(RandomSampler_getUInt(sampler));
         const float z = cast_i2f(RandomSampler_getUInt(sampler));
         const float w = cast_i2f(RandomSampler_getUInt(sampler));
-        mesh->positions[1][i] = Vec3fa(x,y,z,w);
+        mesh->positions[1][i] = Vec3fa(Vec3ff(x,y,z,w));
       }
     }
 
@@ -575,7 +574,7 @@ namespace embree
       const float y = cast_i2f(RandomSampler_getUInt(sampler));
       const float z = cast_i2f(RandomSampler_getUInt(sampler));
       const float r = cast_i2f(RandomSampler_getUInt(sampler));
-      mesh->positions[0][i] = Vec3fa(x,y,z,r);
+      mesh->positions[0][i] = Vec3ff(x,y,z,r);
     }
 
     if (mblur) 
@@ -586,7 +585,7 @@ namespace embree
         const float y = cast_i2f(RandomSampler_getUInt(sampler));
         const float z = cast_i2f(RandomSampler_getUInt(sampler));
         const float r = cast_i2f(RandomSampler_getUInt(sampler));
-        mesh->positions[1][i] = Vec3fa(x,y,z,r);
+        mesh->positions[1][i] = Vec3ff(x,y,z,r);
       }
     }
 
@@ -611,7 +610,7 @@ namespace embree
       const float y = cast_i2f(RandomSampler_getUInt(sampler));
       const float z = cast_i2f(RandomSampler_getUInt(sampler));
       const float r = cast_i2f(RandomSampler_getUInt(sampler));
-      mesh->positions[0][i] = Vec3fa(x,y,z,r);
+      mesh->positions[0][i] = Vec3ff(x,y,z,r);
     }
 
     if (mblur) 
@@ -622,7 +621,7 @@ namespace embree
         const float y = cast_i2f(RandomSampler_getUInt(sampler));
         const float z = cast_i2f(RandomSampler_getUInt(sampler));
         const float r = cast_i2f(RandomSampler_getUInt(sampler));
-        mesh->positions[1][i] = Vec3fa(x,y,z,r);
+        mesh->positions[1][i] = Vec3ff(x,y,z,r);
       }
     }
 
@@ -647,7 +646,7 @@ namespace embree
         const float y = cast_i2f(RandomSampler_getUInt(sampler));
         const float z = cast_i2f(RandomSampler_getUInt(sampler));
         const float w = cast_i2f(RandomSampler_getUInt(sampler));
-        mesh->positions[0].push_back(Vec3fa(x,y,z,w));
+        mesh->positions[0].push_back(Vec3fa(Vec3ff(x,y,z,w)));
 
         if (mblur) 
         {
@@ -655,7 +654,7 @@ namespace embree
           const float y = cast_i2f(RandomSampler_getUInt(sampler));
           const float z = cast_i2f(RandomSampler_getUInt(sampler));
           const float w = cast_i2f(RandomSampler_getUInt(sampler));
-          mesh->positions[1].push_back(Vec3fa(x,y,z,w));
+          mesh->positions[1].push_back(Vec3fa(Vec3ff(x,y,z,w)));
         }
       }
     }
@@ -677,7 +676,7 @@ namespace embree
       const float y = cast_i2f(RandomSampler_getUInt(sampler));
       const float z = cast_i2f(RandomSampler_getUInt(sampler));
       const float r = cast_i2f(RandomSampler_getUInt(sampler));
-      mesh->positions[0].push_back(Vec3fa(x, y, z, r));
+      mesh->positions[0].push_back(Vec3ff(x, y, z, r));
 
       if (mblur)
       {
@@ -685,7 +684,7 @@ namespace embree
         const float y = cast_i2f(RandomSampler_getUInt(sampler));
         const float z = cast_i2f(RandomSampler_getUInt(sampler));
         const float r = cast_i2f(RandomSampler_getUInt(sampler));
-        mesh->positions[1].push_back(Vec3fa(x, y, z, r));
+        mesh->positions[1].push_back(Vec3ff(x, y, z, r));
       }
     }
 

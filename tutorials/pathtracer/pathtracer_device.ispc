@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "../common/math/random_sampler.isph"
 #include "../common/math/sampling.isph"
@@ -386,7 +373,7 @@ inline float AnisotropicBlinn__eval(const varying AnisotropicBlinn* uniform This
 
 /*! Samples the distribution. \param s is the sample location
  *  provided by the caller. */
-inline Vec3fa AnisotropicBlinn__sample(const varying AnisotropicBlinn* uniform This, const float sx, const float sy)
+inline Vec3ff AnisotropicBlinn__sample(const varying AnisotropicBlinn* uniform This, const float sx, const float sy)
 {
   const float phi = two_pi*sx;
   const float sinPhi0 = sqrtf(This->nx+1)*sinf(phi);
@@ -400,7 +387,7 @@ inline Vec3fa AnisotropicBlinn__sample(const varying AnisotropicBlinn* uniform T
   const float pdf = This->norm1*powf(cosTheta,n);
   const Vec3f h = make_Vec3f(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
   const Vec3f wh = h.x*This->dx + h.y*This->dy + h.z*This->dz;
-  return make_Vec3fa(wh,pdf);
+  return make_Vec3ff(wh,pdf);
 }
 
 inline Vec3f AnisotropicBlinn__eval(const varying AnisotropicBlinn* uniform This, const Vec3f& wo, const Vec3f& wi)
@@ -424,7 +411,7 @@ inline Vec3f AnisotropicBlinn__sample(const varying AnisotropicBlinn* uniform Th
 {
   //wi = Vec3f(reflect(normalize(wo),normalize(dz)),1.0f); return Kr;
   //wi = Vec3f(neg(wo),1.0f); return Kt;
-  const Vec3fa wh = AnisotropicBlinn__sample(This,sx,sy);
+  const Vec3ff wh = AnisotropicBlinn__sample(This,sx,sy);
   //if (dot(wo,wh) < 0.0f) return Vec3f(0.0f,0.0f);
 
   /* reflection */
@@ -866,7 +853,7 @@ unmasked void occlusionFilterOBJ(const RTCFilterFunctionNArguments* uniform args
 unmasked void occlusionFilterHair(const RTCFilterFunctionNArguments* uniform args);
 
 /* accumulation buffer */
-uniform Vec3fa* uniform g_accu = NULL;
+uniform Vec3ff* uniform g_accu = NULL;
 uniform unsigned int g_accu_width = 0;
 uniform unsigned int g_accu_height = 0;
 uniform unsigned int g_accu_count = 0;
@@ -880,12 +867,14 @@ extern uniform int g_instancing_mode;
 
 uniform bool g_animation = true;
 uniform bool g_use_smooth_normals = false;
+#if 0
 void device_key_pressed_handler(uniform int key)
 {
   if (key == 32  /* */) g_animation = !g_animation;
   if (key == 110 /*n*/) { g_use_smooth_normals = !g_use_smooth_normals; g_changed = true; }
   else device_key_pressed_default(key);
 }
+#endif
 
 void assignShaders(ISPCGeometry* uniform geometry)
 {
@@ -1275,6 +1264,11 @@ void postIntersectGeometry(const Ray& ray, DifferentialGeometry& dg, uniform ISP
   else if (geometry->type == GRID_MESH)
   {
     uniform ISPCGridMesh* uniform mesh = (uniform ISPCGridMesh* uniform) geometry;
+    materialID = mesh->geom.materialID;
+  }
+  else if (geometry->type == POINTS)
+  {
+    uniform ISPCPointSet* uniform mesh = (uniform ISPCPointSet* uniform) geometry;
     materialID = mesh->geom.materialID;
   }
   else if (geometry->type == CURVES)
@@ -1719,7 +1713,7 @@ void renderTileStandard(uniform int taskIndex,
     Vec3f color = renderPixelStandard((float)x,(float)y,camera,g_stats[threadIndex]);
 
     /* write color to framebuffer */
-    Vec3fa accu_color = g_accu[y*width+x] + make_Vec3fa(color.x,color.y,color.z,1.0f); g_accu[y*width+x] = accu_color;
+    Vec3ff accu_color = g_accu[y*width+x] + make_Vec3ff(color.x,color.y,color.z,1.0f); g_accu[y*width+x] = accu_color;
     float f = rcp(max(0.001f,accu_color.w));
     unsigned int r = (unsigned int) (255.01f * clamp(accu_color.x*f,0.0f,1.0f));
     unsigned int g = (unsigned int) (255.01f * clamp(accu_color.y*f,0.0f,1.0f));
@@ -1737,7 +1731,7 @@ task void renderTileTask(uniform int* uniform pixels,
                          const uniform int numTilesX,
                          const uniform int numTilesY)
 {
-  renderTile(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  renderTileStandard(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
 }
 
 
@@ -1807,11 +1801,19 @@ export void device_init (uniform int8* uniform cfg)
   g_accu_vz = make_Vec3fa(0.0f);
   g_accu_p  = make_Vec3fa(0.0f);
 
-  /* set start render mode */
-  renderTile = renderTileStandard;
-  key_pressed_handler = device_key_pressed_handler;
-
 } // device_init
+
+export void renderFrameStandard (uniform int* uniform pixels,
+                          const uniform unsigned int width,
+                          const uniform unsigned int height,
+                          const uniform float time,
+                          const uniform ISPCCamera& camera)
+{
+  /* render image */
+  const uniform int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
+  const uniform int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
+  launch[numTilesX*numTilesY] renderTileTask(pixels,width,height,time,camera,numTilesX,numTilesY); sync;
+}
 
 /* called by the C++ code to render */
 export void device_render (uniform int* uniform pixels,
@@ -1830,11 +1832,11 @@ export void device_render (uniform int* uniform pixels,
   /* create accumulator */
   if (g_accu_width != width || g_accu_height != height) {
     delete[] g_accu;
-    g_accu = uniform new uniform Vec3fa[width*height];
+    g_accu = uniform new uniform Vec3ff[width*height];
     g_accu_width = width;
     g_accu_height = height;
     for (uniform unsigned int i=0; i<width*height; i++)
-      g_accu[i] = make_Vec3fa(0.0f);
+      g_accu[i] = make_Vec3ff(0.0f);
   }
 
   /* reset accumulator */
@@ -1848,7 +1850,7 @@ export void device_render (uniform int* uniform pixels,
   {
     g_accu_count=0;
     for (uniform unsigned int i=0; i<width*height; i++)
-      g_accu[i] = make_Vec3fa(0.0f);
+      g_accu[i] = make_Vec3ff(0.0f);
 
     if (g_subdiv_mode) {
       updateEdgeLevels(g_ispc_scene,camera.xfm.p);
@@ -1858,11 +1860,6 @@ export void device_render (uniform int* uniform pixels,
   else
     g_accu_count++;
 
-  /* render image */
-  const uniform int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
-  const uniform int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
-  launch[numTilesX*numTilesY] renderTileTask(pixels,width,height,time,camera,numTilesX,numTilesY); sync;
-  //rtcDebug();
 } // device_render
 
 /* called by the C++ code for cleanup */

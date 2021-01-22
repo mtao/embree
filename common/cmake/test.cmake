@@ -1,18 +1,5 @@
-## ======================================================================== ##
-## Copyright 2009-2020 Intel Corporation                                    ##
-##                                                                          ##
-## Licensed under the Apache License, Version 2.0 (the "License");          ##
-## you may not use this file except in compliance with the License.         ##
-## You may obtain a copy of the License at                                  ##
-##                                                                          ##
-##     http://www.apache.org/licenses/LICENSE-2.0                           ##
-##                                                                          ##
-## Unless required by applicable law or agreed to in writing, software      ##
-## distributed under the License is distributed on an "AS IS" BASIS,        ##
-## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
-## See the License for the specific language governing permissions and      ##
-## limitations under the License.                                           ##
-## ======================================================================== ##
+## Copyright 2009-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 INCLUDE(CTest)
 
@@ -43,28 +30,25 @@ IF (EMBREE_TESTING_MODEL_DIR)
   SET(EMBREE_MODEL_DIR ${EMBREE_TESTING_MODEL_DIR})
 ENDIF()
 
-MACRO (ADD_EMBREE_NORMAL_TEST name reference executable args)  
+MACRO (ADD_EMBREE_NORMAL_CPP_TEST name reference executable args)  
   IF (BUILD_TESTING)  
     ADD_TEST(NAME ${name}
              WORKING_DIRECTORY ${MY_PROJECT_BINARY_DIR}
              COMMAND ${executable} --compare ${EMBREE_MODEL_DIR}/reference/${reference}.tga ${args})
-  ENDIF()
-  
-  IF (EMBREE_ISPC_SUPPORT AND EMBREE_RAY_PACKETS)
-    IF (BUILD_TESTING)  
-      ADD_TEST(NAME ${name}_ispc
-               WORKING_DIRECTORY ${MY_PROJECT_BINARY_DIR}
-               COMMAND ${executable}_ispc --compare ${EMBREE_MODEL_DIR}/reference/${reference}.tga ${args})
-    ENDIF()
   ENDIF()
 ENDMACRO()
 
-MACRO (ADD_EMBREE_TEST_WITHOUT_ISPC name)
-  IF (BUILD_TESTING)  
-    ADD_TEST(NAME ${name}
+MACRO (ADD_EMBREE_NORMAL_ISPC_TEST name reference executable args)  
+  IF (BUILD_TESTING AND EMBREE_ISPC_SUPPORT AND EMBREE_RAY_PACKETS)
+    ADD_TEST(NAME ${name}_ispc
              WORKING_DIRECTORY ${MY_PROJECT_BINARY_DIR}
-             COMMAND ${executable} --compare ${EMBREE_MODEL_DIR}/reference/${reference}.tga ${args})
-  ENDIF()
+             COMMAND ${executable}_ispc --compare ${EMBREE_MODEL_DIR}/reference/${reference}.tga ${args})
+  ENDIF()       
+ENDMACRO()
+
+MACRO (ADD_EMBREE_NORMAL_TEST name reference executable args)
+  ADD_EMBREE_NORMAL_CPP_TEST(${name} ${reference} ${executable} "${args}")
+  ADD_EMBREE_NORMAL_ISPC_TEST(${name} ${reference} ${executable} "${args}")
 ENDMACRO()
 
 MACRO (ADD_EMBREE_TEST name)

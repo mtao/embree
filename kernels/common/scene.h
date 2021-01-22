@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
  
 #pragma once
 
@@ -39,7 +26,7 @@ namespace embree
   /*! Base class all scenes are derived from */
   class Scene : public AccelN
   {
-    ALIGNED_CLASS_(16);
+    ALIGNED_CLASS_(std::alignment_of<Scene>::value);
 
   public:
     template<typename Ty, bool mblur = false>
@@ -150,7 +137,7 @@ namespace embree
     Scene (Device* device);
 
     /*! Scene destruction */
-    ~Scene ();
+    ~Scene () noexcept;
 
   private:
     /*! class is non-copyable */
@@ -214,7 +201,6 @@ namespace embree
     {
       Ref<Geometry>& g = geometries[geomID];
       if (!g) return false;
-      if (!g->isEnabled()) return false;
       return g->getModCounter() > geometryModCounters_[geomID];
     }
 
@@ -316,11 +302,11 @@ namespace embree
     MutexSys schedulerMutex;
     Ref<TaskScheduler> scheduler;
 #elif defined(TASKING_TBB) && TASKING_TBB_USE_TASK_ISOLATION
-    tbb::isolated_task_group* group;
+    tbb::isolated_task_group group;
 #elif defined(TASKING_TBB)
-    tbb::task_group* group;
+    tbb::task_group group;
 #elif defined(TASKING_PPL)
-    concurrency::task_group* group;
+    concurrency::task_group group;
 #endif
     
   public:
@@ -338,10 +324,7 @@ namespace embree
     void progressMonitor(double nprims);
     void setProgressMonitorFunction(RTCProgressMonitorFunction func, void* ptr);
 
-  public:
-    
   private:
-
     GeometryCounts world;               //!< counts for geometry
 
   public:

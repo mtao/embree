@@ -1,18 +1,5 @@
-## ======================================================================== ##
-## Copyright 2009-2020 Intel Corporation                                    ##
-##                                                                          ##
-## Licensed under the Apache License, Version 2.0 (the "License");          ##
-## you may not use this file except in compliance with the License.         ##
-## You may obtain a copy of the License at                                  ##
-##                                                                          ##
-##     http://www.apache.org/licenses/LICENSE-2.0                           ##
-##                                                                          ##
-## Unless required by applicable law or agreed to in writing, software      ##
-## distributed under the License is distributed on an "AS IS" BASIS,        ##
-## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
-## See the License for the specific language governing permissions and      ##
-## limitations under the License.                                           ##
-## ======================================================================== ##
+## Copyright 2009-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 message("CTEST_BUILD_OPTIONS = ${CTEST_BUILD_OPTIONS}")
 
@@ -56,7 +43,7 @@ MACRO(update_test_models)
   IF(NOT EXISTS "${TEST_MODELS_DIRECTORY}")
     MESSAGE("cloning test models ...")
     EXECUTE_PROCESS(
-      COMMAND ${CTEST_GIT_COMMAND} "clone" "git@git.sdvis.org:embree-models" embree-models
+      COMMAND ${CTEST_GIT_COMMAND} "clone" "git@vis-gitolite:embree-models" embree-models
       WORKING_DIRECTORY ${TEST_MODELS_PARENT_DIRECTORY}
       RESULT_VARIABLE retcode)
     check_return_code()

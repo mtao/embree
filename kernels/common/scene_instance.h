@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -61,7 +48,7 @@ namespace embree
     virtual void setNumTimeSteps (unsigned int numTimeSteps) override;
     virtual void setInstancedScene(const Ref<Scene>& scene) override;
     virtual void setTransform(const AffineSpace3fa& local2world, unsigned int timeStep) override;
-    virtual void setQuaternionDecomposition(const AffineSpace3fa& qd, unsigned int timeStep) override;
+    virtual void setQuaternionDecomposition(const AffineSpace3ff& qd, unsigned int timeStep) override;
     virtual AffineSpace3fa getTransform(float time) override;
     virtual void setMask (unsigned mask) override;
     virtual void build() {}
@@ -96,6 +83,34 @@ namespace embree
       assert(i == 0);
       LBBox3fa lbbox = nonlinearBounds(dt, time_range, fnumTimeSegments);
       return lbbox;
+    }
+
+    /*! calculates the build bounds of the i'th item, if it's valid */
+    __forceinline bool buildBounds(size_t i, BBox3fa* bbox = nullptr) const
+    {
+      assert(i==0);
+      const BBox3fa b = bounds(i);
+      if (bbox) *bbox = b;
+      return isvalid(b);
+    }
+
+     /*! calculates the build bounds of the i'th item at the itime'th time segment, if it's valid */
+    __forceinline bool buildBounds(size_t i, size_t itime, BBox3fa& bbox) const
+    {
+      assert(i==0);
+      const LBBox3fa bounds = linearBounds(i,itime);
+      bbox = bounds.bounds ();
+      return isvalid(bounds);
+    }
+
+    /* gets version info of topology */
+    unsigned int getTopologyVersion() const {
+      return numPrimitives;
+    }
+  
+    /* returns true if topology changed */
+    bool topologyChanged(unsigned int otherVersion) const {
+      return numPrimitives != otherVersion;
     }
 
     /*! check if the i'th primitive is valid between the specified time range */
@@ -150,18 +165,18 @@ namespace embree
       const size_t index = bsf(movemask(valid));
       const int itime = itime_k[index];
       if (likely(all(valid, itime_k == vint<K>(itime)))) {
-        return rcp(slerp(AffineSpace3vfa<K>(local2world[itime+0]),
-                         AffineSpace3vfa<K>(local2world[itime+1]),
+        return rcp(slerp(AffineSpace3vff<K>(local2world[itime+0]),
+                         AffineSpace3vff<K>(local2world[itime+1]),
                          ftime));
       }
       else {
-        AffineSpace3vfa<K> space0,space1;
+        AffineSpace3vff<K> space0,space1;
         vbool<K> valid1 = valid;
         while (any(valid1)) {
           vbool<K> valid2;
           const int itime = next_unique(valid1, itime_k, valid2);
-          space0 = select(valid2, AffineSpace3vfa<K>(local2world[itime+0]), space0);
-          space1 = select(valid2, AffineSpace3vfa<K>(local2world[itime+1]), space1);
+          space0 = select(valid2, AffineSpace3vff<K>(local2world[itime+0]), space0);
+          space1 = select(valid2, AffineSpace3vff<K>(local2world[itime+1]), space1);
         }
         return rcp(slerp(space0, space1, ftime));
       }
@@ -176,8 +191,8 @@ namespace embree
       const size_t index = bsf(movemask(valid));
       const int itime = itime_k[index];
       if (likely(all(valid, itime_k == vint<K>(itime)))) {
-        return rcp(lerp(AffineSpace3vf<K>(local2world[itime+0]),
-                        AffineSpace3vf<K>(local2world[itime+1]),
+        return rcp(lerp(AffineSpace3vf<K>((AffineSpace3fa)local2world[itime+0]),
+                        AffineSpace3vf<K>((AffineSpace3fa)local2world[itime+1]),
                         ftime));
       } else {
         AffineSpace3vf<K> space0,space1;
@@ -185,8 +200,8 @@ namespace embree
         while (any(valid1)) {
           vbool<K> valid2;
           const int itime = next_unique(valid1, itime_k, valid2);
-          space0 = select(valid2, AffineSpace3vf<K>(local2world[itime+0]), space0);
-          space1 = select(valid2, AffineSpace3vf<K>(local2world[itime+1]), space1);
+          space0 = select(valid2, AffineSpace3vf<K>((AffineSpace3fa)local2world[itime+0]), space0);
+          space1 = select(valid2, AffineSpace3vf<K>((AffineSpace3fa)local2world[itime+1]), space1);
         }
         return rcp(lerp(space0, space1, ftime));
       }
@@ -194,7 +209,7 @@ namespace embree
 
   public:
     Accel* object;                 //!< pointer to instanced acceleration structure
-    AffineSpace3fa* local2world;   //!< transformation from local space to world space for each timestep (either normal matrix or quaternion decomposition)
+    AffineSpace3ff* local2world;   //!< transformation from local space to world space for each timestep (either normal matrix or quaternion decomposition)
     AffineSpace3fa world2local0;   //!< transformation from world space to local space for timestep 0
   };
 
@@ -211,8 +226,10 @@ namespace embree
         assert(r.end()   == 1);
 
         PrimInfo pinfo(empty);
-        const BBox3fa b = bounds(0);
-        if (!isvalid(b)) return pinfo;
+        BBox3fa b = empty;
+        if (!buildBounds(0,&b)) return pinfo;
+        // const BBox3fa b = bounds(0);
+        // if (!isvalid(b)) return pinfo;
 
         const PrimRef prim(b,geomID,unsigned(0));
         pinfo.add_center2(prim);
@@ -226,8 +243,11 @@ namespace embree
         assert(r.end()   == 1);
 
         PrimInfo pinfo(empty);
-        if (!valid(0,range<size_t>(itime))) return pinfo;
-        const PrimRef prim(linearBounds(0,itime).bounds(),geomID,unsigned(0));
+        BBox3fa b = empty;
+        if (!buildBounds(0,&b)) return pinfo;
+        // if (!valid(0,range<size_t>(itime))) return pinfo;
+        // const PrimRef prim(linearBounds(0,itime).bounds(),geomID,unsigned(0));
+        const PrimRef prim(b,geomID,unsigned(0));
         pinfo.add_center2(prim);
         prims[k++] = prim;
         return pinfo;

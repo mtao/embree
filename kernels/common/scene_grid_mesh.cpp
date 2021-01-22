@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "scene_grid_mesh.h"
 #include "scene.h"
@@ -190,6 +177,11 @@ namespace embree
     unsigned int primID = args->primID;
     float U = args->u;
     float V = args->v;
+
+    /* clamp input u,v to [0;1] range */
+    U = max(min(U,1.0f),0.0f);
+    V = max(min(V,1.0f),0.0f);
+    
     RTCBufferType bufferType = args->bufferType;
     unsigned int bufferSlot = args->bufferSlot;
     float* P = args->P;

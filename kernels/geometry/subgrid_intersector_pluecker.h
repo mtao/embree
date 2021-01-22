@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -40,8 +27,8 @@ namespace embree
       {
         const vbool<M> invalid = abs(UVW) < min_rcp_input;
         const vfloat<M> rcpUVW = select(invalid,vfloat<M>(0.0f),rcp(UVW));
-        const vfloat<M> u = U * rcpUVW;
-        const vfloat<M> v = V * rcpUVW;
+        const vfloat<M> u = min(U * rcpUVW,1.0f);
+        const vfloat<M> v = min(V * rcpUVW,1.0f);
         const vfloat<M> u1 = vfloat<M>(1.0f) - u;
         const vfloat<M> v1 = vfloat<M>(1.0f) - v;
 #if !defined(__AVX__) || defined(EMBREE_BACKFACE_CULLING)
@@ -101,8 +88,8 @@ namespace embree
                                                 SubGridQuadHitPlueckerM<M> &hit)
     {
         /* calculate vertices relative to ray origin */
-        const Vec3vf<M> O = Vec3vf<M>(ray.org);
-        const Vec3vf<M> D = Vec3vf<M>(ray.dir);
+      const Vec3vf<M> O = Vec3vf<M>((Vec3fa)ray.org);
+      const Vec3vf<M> D = Vec3vf<M>((Vec3fa)ray.dir);
         const Vec3vf<M> v0 = tri_v0-O;
         const Vec3vf<M> v1 = tri_v1-O;
         const Vec3vf<M> v2 = tri_v2-O;
@@ -273,8 +260,8 @@ namespace embree
         {
           const vbool<K> invalid = abs(UVW) < min_rcp_input;
           const vfloat<K> rcpUVW = select(invalid,vfloat<K>(0.0f),rcp(UVW));
-          const vfloat<K> u0 = U * rcpUVW;
-          const vfloat<K> v0 = V * rcpUVW;
+          const vfloat<K> u0 = min(U * rcpUVW,1.0f);
+          const vfloat<K> v0 = min(V * rcpUVW,1.0f);
           const vfloat<K> u1 = vfloat<K>(1.0f) - u0;
           const vfloat<K> v1 = vfloat<K>(1.0f) - v0;
           const vfloat<K> uu = select(flags,u1,u0);

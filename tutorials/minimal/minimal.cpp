@@ -1,23 +1,16 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include <embree3/rtcore.h>
 #include <stdio.h>
 #include <math.h>
 #include <limits>
+#include <stdio.h>
+
+#if defined(_WIN32)
+#  include <conio.h>
+#  include <windows.h>
+#endif
 
 /*
  * A minimal tutorial. 
@@ -44,8 +37,8 @@
  * This is only required to make the tutorial compile even when
  * a custom namespace is set.
  */
-#if defined(RTC_NAMESPACE_OPEN)
-RTC_NAMESPACE_OPEN
+#if defined(RTC_NAMESPACE_USE)
+RTC_NAMESPACE_USE
 #endif
 
 /*
@@ -183,7 +176,7 @@ void castRay(RTCScene scene,
   rayhit.ray.dir_z = dz;
   rayhit.ray.tnear = 0;
   rayhit.ray.tfar = std::numeric_limits<float>::infinity();
-  rayhit.ray.mask = 0;
+  rayhit.ray.mask = -1;
   rayhit.ray.flags = 0;
   rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
   rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
@@ -213,6 +206,27 @@ void castRay(RTCScene scene,
     printf("Did not find any intersection.\n");
 }
 
+void waitForKeyPressedUnderWindows()
+{
+#if defined(_WIN32)
+  HANDLE hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+  
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  if (!GetConsoleScreenBufferInfo(hStdOutput, &csbi)) {
+    printf("GetConsoleScreenBufferInfo failed: %d\n", GetLastError());
+    return;
+  }
+  
+  /* do not pause when running on a shell */
+  if (csbi.dwCursorPosition.X != 0 || csbi.dwCursorPosition.Y != 0)
+    return;
+  
+  /* only pause if running in separate console window. */
+  printf("\n\tPress any key to exit...\n");
+  int ch = getch();
+#endif
+}
+
 
 /* -------------------------------------------------------------------------- */
 
@@ -233,7 +247,10 @@ int main()
    * always make sure to release resources allocated through Embree. */
   rtcReleaseScene(scene);
   rtcReleaseDevice(device);
-
+  
+  /* wait for user input under Windows when opened in separate window */
+  waitForKeyPressedUnderWindows();
+  
   return 0;
 }
 

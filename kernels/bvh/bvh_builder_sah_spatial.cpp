@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "bvh.h"
 #include "bvh_builder.h"
@@ -125,7 +112,7 @@ namespace embree
 	      createPrimRefArray_presplit<Mesh,Splitter>(mesh,maxGeomID,numOriginalPrimitives,prims0,bvh->scene->progressInterface) :
 	      createPrimRefArray_presplit<Mesh,Splitter>(scene,Mesh::geom_type,false,numOriginalPrimitives,prims0,bvh->scene->progressInterface);
 
-	    const size_t node_bytes = pinfo.size()*sizeof(typename BVH::AlignedNode)/(4*N);
+	    const size_t node_bytes = pinfo.size()*sizeof(typename BVH::AABBNode)/(4*N);
 	    const size_t leaf_bytes = size_t(1.2*Primitive::blocks(pinfo.size())*sizeof(Primitive));
 	    bvh->alloc.init_estimate(node_bytes+leaf_bytes);
 	    settings.singleThreadThreshold = bvh->alloc.fixSingleThreadThreshold(N,DEFAULT_SINGLE_THREAD_THRESHOLD,pinfo.size(),node_bytes+leaf_bytes);
@@ -145,7 +132,7 @@ namespace embree
 	
 	    Splitter splitter(scene);
 
-	    const size_t node_bytes = pinfo.size()*sizeof(typename BVH::AlignedNode)/(4*N);
+	    const size_t node_bytes = pinfo.size()*sizeof(typename BVH::AABBNode)/(4*N);
 	    const size_t leaf_bytes = size_t(1.2*Primitive::blocks(pinfo.size())*sizeof(Primitive));
 	    bvh->alloc.init_estimate(node_bytes+leaf_bytes);
 	    settings.singleThreadThreshold = bvh->alloc.fixSingleThreadThreshold(N,DEFAULT_SINGLE_THREAD_THRESHOLD,pinfo.size(),node_bytes+leaf_bytes);
@@ -156,8 +143,8 @@ namespace embree
 	    /* call BVH builder */
 	    root = BVHBuilderBinnedFastSpatialSAH::build<NodeRef>(
 								  typename BVH::CreateAlloc(bvh),
-								  typename BVH::AlignedNode::Create2(),
-								  typename BVH::AlignedNode::Set2(),
+								  typename BVH::AABBNode::Create2(),
+								  typename BVH::AABBNode::Set2(),
 								  CreateLeafSpatial<N,Primitive>(bvh),
 								  splitter,
 								  bvh->scene->progressInterface,
@@ -174,7 +161,6 @@ namespace embree
 	/* clear temporary data for static geometry */
 	if (scene && scene->isStaticAccel()) {
           prims0.clear();
-          bvh->shrink();
         }
 	bvh->cleanup();
         bvh->postBuild(t0);

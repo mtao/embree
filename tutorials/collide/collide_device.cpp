@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "../common/math/random_sampler.h"
 #include "../common/core/differential_geometry.h"
@@ -54,7 +41,7 @@ const float h = 1.f / (nsub * 24.f);
 const size_t nIters = 20;
 const float collDelta = 1.e-6f;
 
-bool pause = false;
+extern bool pause;
 
 /* creates a ground plane */
 unsigned int createGroundPlane (RTCScene scene)
@@ -190,7 +177,7 @@ void initializeClothPositions (collide2::ClothModel & cloth) {
   cloth.x_ = cloth.x_0_;
   cloth.x_old_ = cloth.x_0_;
   cloth.x_last_ = cloth.x_0_;
-  collide2::vec_t nullvec {0.f, 0.f, 0.f, 0.f};
+  collide2::vec_t nullvec(0.f, 0.f, 0.f);
   std::fill (cloth.v_.begin (), cloth.v_.end (), nullvec);
 
   cur_time = 0;
@@ -204,8 +191,8 @@ unsigned int createClothSheet (RTCScene scene)
   cloth->x_.resize (NX*NZ);
   cloth->x_old_.resize (NX*NZ);
   cloth->x_last_.resize (NX*NZ);
-  collide2::vec_t nullvec {0.f, 0.f, 0.f, 0.f};
-  collide2::vec_t gravity {0.f, -9.8f, 0.f, 0.f};
+  collide2::vec_t nullvec(0.f, 0.f, 0.f);
+  collide2::vec_t gravity(0.f, -9.8f, 0.f);
   cloth->v_.resize (NX*NZ, nullvec);
   cloth->a_.resize (NX*NZ, gravity);
   cloth->m_.resize (NX*NZ, m);
@@ -376,8 +363,8 @@ Vec3fa renderPixelStandard(float x, float y, const ISPCCamera& camera)
 {
   /* initialize ray */
   Ray ray;
-  ray.org = Vec3fa(camera.xfm.p);
-  ray.dir = Vec3fa(normalize(x*camera.xfm.l.vx + y*camera.xfm.l.vy + camera.xfm.l.vz));
+  ray.org = Vec3ff(camera.xfm.p);
+  ray.dir = Vec3ff(normalize(x*camera.xfm.l.vx + y*camera.xfm.l.vy + camera.xfm.l.vz));
   ray.tnear() = 0.0f;
   ray.tfar = inf;
   ray.geomID = RTC_INVALID_GEOMETRY_ID;
@@ -403,14 +390,6 @@ Vec3fa renderPixelStandard(float x, float y, const ISPCCamera& camera)
   }
 
   return color*abs(dot(neg(ray.dir),normalize(ray.Ng)));
-}
-
-void device_key_pressed_handler(int key)
-{
-  if (key == 32  /* */) initializeClothPositions ((collide2::ClothModel &) (*meshes[clothID]));
-  if (key == 80 /*p*/) { pause = !pause; }
-  if (pause == true && key == 78 /*n*/) { updateScene (); std::cout << "current time: " << cur_time << std::endl;}
-  else device_key_pressed_default(key);
 }
 
 /* renders a single screen tile */
@@ -453,7 +432,7 @@ void renderTileTask (int taskIndex, int threadIndex, int* pixels,
                          const int numTilesX,
                          const int numTilesY)
 {
-  renderTile(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  renderTileStandard(taskIndex,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
 }
 
 /* called by the C++ code for initialization */
@@ -470,11 +449,23 @@ extern "C" void device_init (char* cfg)
 
   /* set error handler */
   rtcSetDeviceErrorFunction(g_device,error_handler,nullptr);
+}
 
-  /* set start render mode */
-  renderTile = renderTileStandard;
-  key_pressed_handler = device_key_pressed_handler;
-} 
+extern "C" void renderFrameStandard (int* pixels,
+                          const unsigned int width,
+                          const unsigned int height,
+                          const float time,
+                          const ISPCCamera& camera)
+{
+  /* render image */
+  const int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
+  const int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
+  parallel_for(size_t(0),size_t(numTilesX*numTilesY),[&](const range<size_t>& range) {
+    const int threadIndex = (int)TaskScheduler::threadIndex();
+    for (size_t i=range.begin(); i<range.end(); i++)
+      renderTileTask((int)i,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
+  }); 
+}
 
 /* called by the C++ code to render */
 extern "C" void device_render (int* pixels,
@@ -491,15 +482,6 @@ extern "C" void device_render (int* pixels,
     std::cout << "collision time = " << 1000.0f*total_collision_time << " ms" << std::endl;
     exit(0);
   }
-
-  /* render image */
-  const int numTilesX = (width +TILE_SIZE_X-1)/TILE_SIZE_X;
-  const int numTilesY = (height+TILE_SIZE_Y-1)/TILE_SIZE_Y;
-  parallel_for(size_t(0),size_t(numTilesX*numTilesY),[&](const range<size_t>& range) {
-    const int threadIndex = (int)TaskScheduler::threadIndex();
-    for (size_t i=range.begin(); i<range.end(); i++)
-      renderTileTask((int)i,threadIndex,pixels,width,height,time,camera,numTilesX,numTilesY);
-  }); 
 }
 
 /* called by the C++ code for cleanup */

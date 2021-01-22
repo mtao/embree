@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2009-2020 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2009-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -33,7 +20,7 @@ namespace embree
       uint32_t v[3];
 
       /*! outputs triangle indices */
-      __forceinline friend std::ostream &operator<<(std::ostream& cout, const Triangle& t) {
+      __forceinline friend embree_ostream operator<<(embree_ostream cout, const Triangle& t) {
         return cout << "Triangle { " << t.v[0] << ", " << t.v[1] << ", " << t.v[2] << " }";
       }
     };
@@ -106,15 +93,6 @@ namespace embree
       const Vec3fa v1 = vertex(tri.v[1],itime);
       const Vec3fa v2 = vertex(tri.v[2],itime);
       return BBox3fa(min(v0,v1,v2),max(v0,v1,v2));
-    }
-
-    /*! calculates the interpolated bounds of the i'th triangle at the specified time */
-    __forceinline BBox3fa bounds(size_t i, float time) const
-    {
-      float ftime; size_t itime = getTimeSegment(time, fnumTimeSegments, ftime);
-      const BBox3fa b0 = bounds(i, itime+0);
-      const BBox3fa b1 = bounds(i, itime+1);
-      return lerp(b0, b1, ftime);
     }
 
     /*! check if the i'th primitive is valid at the itime'th timestep */

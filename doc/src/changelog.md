@@ -1,13 +1,73 @@
 Version History
 ---------------
 
+### Embree 3.12.1
+
+-   Changed default frequency level to SIMD128 for Skylake, Cannon Lake, Comet Lake and Tiger Lake CPUs.
+    This change typically improves performance for renderers that just use SSE by maintaining higher
+    CPU frequencies. In case your renderer is AVX optimized you can get higher ray tracing performance
+    by configuring the frequency level to simd256 through passing frequency_level=simd256 to rtcNewDevice.
+
+### Embree 3.12.0
+
+-   Added linear cone curve geometry support. In this mode a real geometric surface for curves
+    with linear basis is rendered using capped cones.  They are discontinuous at edge boundaries.
+-   Enabled fast two level builder for instances when low quality build is requested.
+-   Bugfix for BVH build when geometries got disabled.
+-   Added EMBREE_BACKFACE_CULLING_CURVES cmake option.  This allows for a cheaper round
+    linear curve intersection when correct internal tracking and back hits are not required.
+    The new cmake option defaults to OFF.
+-   User geometries with invalid bounds with lower>upper in some dimension will be ignored.
+-   Increased robustness for grid interpolation code and fixed returned out of range u/v
+    coordinates for grid primitive.
+-   Fixed handling of motion blur time range for sphere, discs, and oriented disc geometries.
+-   Fixed missing model data in releases.
+-   Ensure compatibility to newer versions of oneTBB.
+-   Motion blur BVH nodes no longer store NaN values.
+
+### Embree 3.11.0
+
+-   Round linear curves now automatically check for the existence of left and right
+    connected segments if the flags buffer is empty.  Left segments exist if the
+    segment(id-1) + 1 == segment(id) and similarly for right segments.
+-   Implemented the min-width feature for curves and points, which allows to increase the
+    radius in a distance dependent way, such that the curve or points thickness is n pixels wide.
+-   Round linear curves are closed now also at their start.
+-   Embree no longer supports Visual Studio 2013 starting with this release.
+-   Bugfix in subdivision tessellation level assignment for non-quad base primitives
+-   Small meshes are directly added to top level build phase of two-level builder to reduce memory consumption.
+-   Enabled fast two level builder for user geometries when low quality build is requested.
+
+### Embree 3.10.0
+
+-   Added EMBREE_COMPACT_POLYS CMake option which enables double indexed triangle and quad
+    leaves to reduce memory consumption in compact mode by an additional 40% at about
+    15% performance impact. This new mode is disabled by default.
+-   Compile fix for oneTBB 2021.1-beta05
+-   Releases upgrade to TBB 2020.2
+-   Compile fix for ISPC v1.13.0
+-   Adding RPATH to libembree.so in releases
+-   Increased required CMake version to 3.1.0
+-   Made instID member for array of pointers ray stream layout optional again.
+
+### Embree 3.9.0
+
+-   Added round linear curve geometry support. In this mode a real geometric surface for curves
+    with linear basis is rendered using capped cones with spherical filling between
+    the curve segments.
+-   Added rtcGetSceneDevice API function, that returns the device a scene got created in.
+-   Improved performance of round curve rendering by up to 1.8x.
+-   Bugfix to sphere intersection filter invokation for back hit.
+-   Fixed wrong assertion that triggered for invalid curves which anyway get filtered out.
+-   RelWithDebInfo mode no longer enables assertions.
+-   Fixed an issue in FindTBB.cmake that caused compile error with Debug build under Linux.
+-   Embree releases no longer provide RPMs for Linux. Please use the RPMs coming with the package
+    manager of your Linux distribution.
+
 ### Embree 3.8.0
 
-#### New Features:
 -   Added collision detection support for user geometries (see rtcCollide API function)
 -   Passing geomID to user geometry callbacks.
-
-#### Fixed Issues:
 -   Bugfix in AVX512VL codepath for rtcIntersect1
 -   For sphere geometries the intersection filter gets now invoked for
     front and back hit.
