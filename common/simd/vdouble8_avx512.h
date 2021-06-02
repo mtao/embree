@@ -99,15 +99,6 @@ namespace embree
       _mm512_mask_store_pd(addr, mask, v2);
     }
 
-    /* pass by value to avoid compiler generating inefficient code */
-    static __forceinline void storeu_compact(const vboold8 mask,void * addr, const vdouble8& reg) {
-      _mm512_mask_compressstoreu_pd(addr, mask, reg);
-    }
-
-    static __forceinline vdouble8 compact64bit(const vboold8& mask, vdouble8& v) {
-      return _mm512_mask_compress_pd(v, mask, v);
-    }
-
     static __forceinline vdouble8 compact(const vboold8& mask, vdouble8& v) {
       return _mm512_mask_compress_pd(v, mask, v);
     }
@@ -266,18 +257,6 @@ namespace embree
 
   __forceinline vdouble8 select(const vboold8& m, const vdouble8& t, const vdouble8& f) {
     return _mm512_mask_or_pd(f,m,t,t);
-  }
-
-  __forceinline void xchg(const vboold8& m, vdouble8& a, vdouble8& b) {
-    const vdouble8 c = a; a = select(m,b,a); b = select(m,c,b);
-  }
-
-  __forceinline vboold8 test(const vboold8& m, const vdouble8& a, const vdouble8& b) {
-    return _mm512_mask_test_epi64_mask(m,_mm512_castpd_si512(a),_mm512_castpd_si512(b));
-  }
-
-  __forceinline vboold8 test(const vdouble8& a, const vdouble8& b) {
-    return _mm512_test_epi64_mask(_mm512_castpd_si512(a),_mm512_castpd_si512(b));
   }
 
   ////////////////////////////////////////////////////////////////////////////////

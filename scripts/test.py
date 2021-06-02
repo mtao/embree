@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ## Copyright 2009-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
@@ -13,6 +13,7 @@ g_mode = "Experimental"
 g_intensity = 2
 g_debugMode = False
 g_singleConfig = ""
+g_benchmarkMode = False
 
 nas_linux = "/NAS/packages/apps"
 nas_macosx = "/net/nassie/mnt/vol/NAS/packages/apps"
@@ -172,7 +173,7 @@ def runConfig(config):
     elif (compiler == "CLANG"):
       conf.append("-D CMAKE_CXX_COMPILER=clang++ -D CMAKE_C_COMPILER=clang")
     elif (compiler.startswith("ICC")):
-      conf.append("-D CMAKE_CXX_COMPILER="+nas_macosx+"/intel/"+compiler[3:]+"-osx/bin/icpc -D CMAKE_C_COMPILER="+nas_macosx+"/intel/"+compiler[3:]+"-osx/bin/icc")
+      conf.append("-D CMAKE_CXX_COMPILER="+nas_macosx+"/intel/"+compiler[3:]+"-osx/compiler/latest/mac/bin/intel64/icpc -D CMAKE_C_COMPILER="+nas_macosx+"/intel/"+compiler[3:]+"-osx//compiler/latest/mac/bin/intel64/icc")
     else:
       raise ValueError('unknown compiler: ' + compiler + '')
 
@@ -204,16 +205,16 @@ def runConfig(config):
     conf.append("-D EMBREE_MAX_ISA="+isa+"")
   else:
     conf.append("-D EMBREE_MAX_ISA=NONE")
-    if "SSE2"      in isa: conf.append("-D EMBREE_ISA_SSE2=ON")
-    else                 : conf.append("-D EMBREE_ISA_SSE2=OFF")
-    if "SSE42"     in isa: conf.append("-D EMBREE_ISA_SSE42=ON")
-    else                 : conf.append("-D EMBREE_ISA_SSE42=OFF")
-    if "AVX"       in isa: conf.append("-D EMBREE_ISA_AVX=ON")
-    else                 : conf.append("-D EMBREE_ISA_AVX=OFF")
-    if "AVX2"      in isa: conf.append("-D EMBREE_ISA_AVX2=ON")
-    else                 : conf.append("-D EMBREE_ISA_AVX2=OFF")
+    if "SSE2"   in isa: conf.append("-D EMBREE_ISA_SSE2=ON")
+    else              : conf.append("-D EMBREE_ISA_SSE2=OFF")
+    if "SSE42"  in isa: conf.append("-D EMBREE_ISA_SSE42=ON")
+    else              : conf.append("-D EMBREE_ISA_SSE42=OFF")
+    if "AVX"    in isa: conf.append("-D EMBREE_ISA_AVX=ON")
+    else              : conf.append("-D EMBREE_ISA_AVX=OFF")
+    if "AVX2"   in isa: conf.append("-D EMBREE_ISA_AVX2=ON")
+    else              : conf.append("-D EMBREE_ISA_AVX2=OFF")
     if "AVX512" in isa: conf.append("-D EMBREE_ISA_AVX512=ON")
-    else                 : conf.append("-D EMBREE_ISA_AVX512=OFF")
+    else              : conf.append("-D EMBREE_ISA_AVX512=OFF")
 
   if "tasking" in config:
     tasking  = config["tasking"]
@@ -235,6 +236,8 @@ def runConfig(config):
       elif OS == "macosx":
         if tasking == "TBB":
           conf.append("-D EMBREE_TBB_ROOT=/opt/local")
+        elif tasking == "TBB_HOMEBREW":
+          conf.append("-D EMBREE_TBB_ROOT=/opt/homebrew")
         elif tasking.startswith("TBB"):
           conf.append("-D EMBREE_TBB_ROOT="+nas_macosx+"/tbb/tbb-"+tasking[3:]+"-osx")
         else:
@@ -376,6 +379,10 @@ def runConfig(config):
   if rtcore:
     conf.append("-D EMBREE_CONFIG="+(",".join(rtcore)))
        
+  if g_benchmarkMode:
+    conf.append("-D EMBREE_USE_GOOGLE_BENCHMARK=ON")
+    conf.append("-D benchmark_DIR:PATH=/NAS/packages/apps/google-benchmark/vis-perf-x8280-1/lib64/cmake/benchmark")
+
   ctest =  "ctest -VV -S scripts/test.cmake"
   if g_cdash != "": ctest += " -D CTEST_DROP_SITE="+g_cdash
   ctest += " -D EMBREE_TESTING_INTENSITY="+str(g_intensity)
@@ -403,6 +410,7 @@ def parseCommandLine(argv):
   global g_mode
   global g_intensity
   global g_debugMode
+  global g_benchmarkMode
   if len(argv) == 0:
     return;
   elif len(argv)>=2 and argv[0] == "--cdash":
@@ -412,6 +420,9 @@ def parseCommandLine(argv):
     g_mode = argv[1]
   elif len(argv)>=1 and argv[0] == "--debug":
     g_debugMode = True
+    parseCommandLine(argv[1:len(argv)])
+  elif len(argv)>=1 and argv[0] == "--benchmark":
+    g_benchmarkMode = True
     parseCommandLine(argv[1:len(argv)])
   elif len(argv)>=1 and argv[0] == "--help":
     printUsage()
@@ -428,6 +439,6 @@ def parseCommandLine(argv):
   else:
     sys.stderr.write("unknown command line option: "+argv[0])
     sys.exit(1)
-      
+
 parseCommandLine(sys.argv[1:len(sys.argv)])
 runConfig(g_config)

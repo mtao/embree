@@ -66,6 +66,7 @@ namespace embree
     case CPU::CORE1:           frequency_level = FREQUENCY_SIMD128; break;
     case CPU::XEON_PHI_KNIGHTS_MILL   : frequency_level = FREQUENCY_SIMD512; break;
     case CPU::XEON_PHI_KNIGHTS_LANDING: frequency_level = FREQUENCY_SIMD512; break;
+    case CPU::ARM:             frequency_level = FREQUENCY_SIMD128; break;
     }
 
     /* initialize global state */
@@ -73,10 +74,6 @@ namespace embree
     State::parseString(EMBREE_CONFIG);
 #endif
     State::parseString(cfg);
-    if (!ignore_config_files && FileName::executableFolder() != FileName(""))
-      State::parseFile(FileName::executableFolder()+FileName(".embree" TOSTRING(RTC_VERSION_MAJOR)));
-    if (!ignore_config_files && FileName::homeFolder() != FileName(""))
-      State::parseFile(FileName::homeFolder()+FileName(".embree" TOSTRING(RTC_VERSION_MAJOR)));
     State::verify();
 
     /* check whether selected ISA is supported by the HW, as the user could have forced an unsupported ISA */    

@@ -6,7 +6,11 @@
 #include "string.h"
 
 #include <iostream>
+#if defined(__ARM_NEON)
+#include "../simd/arm/emulation.h"
+#else
 #include <xmmintrin.h>
+#endif
 
 #if defined(PTHREADS_WIN32)
 #pragma comment (lib, "pthreadVC.lib")
@@ -280,10 +284,14 @@ namespace embree
   /*! set affinity of the calling thread */
   void setAffinity(ssize_t affinity)
   {
+#if !defined(__ARM_NEON) // affinity seems not supported on M1 chip
+    
     thread_affinity_policy ap;
     ap.affinity_tag = affinity;
     if (thread_policy_set(mach_thread_self(),THREAD_AFFINITY_POLICY,(thread_policy_t)&ap,THREAD_AFFINITY_POLICY_COUNT) != KERN_SUCCESS)
       WARNING("setting thread affinity failed"); // on purpose only a warning
+    
+#endif
   }
 }
 #endif

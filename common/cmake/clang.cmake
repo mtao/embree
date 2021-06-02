@@ -12,6 +12,7 @@ _SET_IF_EMPTY(FLAGS_SSE42 "-msse4.2")
 _SET_IF_EMPTY(FLAGS_AVX   "-mavx")
 _SET_IF_EMPTY(FLAGS_AVX2  "-mf16c -mavx2 -mfma -mlzcnt -mbmi -mbmi2")
 _SET_IF_EMPTY(FLAGS_AVX512 "-march=skx")
+_SET_IF_EMPTY(FLAGS_NEON   "-D__SSE__ -D__SSE2__")
 
 IF (WIN32)
 
@@ -73,6 +74,7 @@ ELSE()
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}") 
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")                       # enables most warnings
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat -Wformat-security")  # enables string format vulnerability warnings
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsigned-char")               # treat char as signed on all processors, including ARM
   IF (NOT APPLE)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE")                     # enables support for more secure position independent execution
   ENDIF()
